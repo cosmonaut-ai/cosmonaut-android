@@ -1,0 +1,80 @@
+complexity:
+  CyclomaticComplexMethod:
+    active: true
+  LongMethod:
+    active: true
+    allowedLines: 60
+  LongParameterList:
+    active: true
+    allowedFunctionParameters: 8
+    allowedConstructorParameters: 12
+    ignoreAnnotatedParameter:
+      - "Composable"
+  TooManyFunctions:
+    active: true
+    allowedFunctionsPerFile: 15
+    allowedFunctionsPerClass: 15
+    ignoreAnnotatedFunctions:
+      - "dagger.Module"
+  NestedBlockDepth:
+    active: true
+    allowedDepth: 5
+
+naming:
+  FunctionNaming:
+    active: true
+    ignoreAnnotated:
+      - "Composable"
+  MatchingDeclarationName:
+    active: true
+    mustBeFirst: false
+
+style:
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+    excludeCommentStatements: true
+  MagicNumber:
+    active: true
+    ignoreNumbers:
+      - "-1"
+      - "0"
+      - "1"
+      - "2"
+    ignoreAnnotated:
+      - "Composable"
+    ignoreHashCodeFunction: true
+    ignorePropertyDeclaration: true
+    ignoreLocalVariableDeclaration: true
+    ignoreEnums: true
+    ignoreRanges: true
+  ReturnCount:
+    active: true
+    max: 3
+    excludeGuardClauses: true
+  UnusedImport:
+    active: true
+  WildcardImport:
+    active: false
+  ForbiddenComment:
+    active: false
+  UnusedPrivateFunction:
+    active: true
+  UnusedPrivateProperty:
+    active: true
+  UnusedVariable:
+    active: true
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: true
+    allowedExceptionNameRegex: "_|(ignore|expected).*"
+  SwallowedException:
+    active: true
+    allowedExceptionNameRegex: "_|(ignore|expected).*"
+
+potential-bugs:
+  UnsafeCast:
+    active: true
+  UselessPostfixExpression:
+    active: true

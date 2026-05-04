@@ -1,0 +1,39 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+max_line_length = 120
+
+[*.{kt,kts}]
+ktlint_code_style = android_studio
+
+# Disable rules that conflict with the Compose compiler's expectations
+ktlint_function_naming_ignore_when_annotated_with = Composable
+ktlint_standard_function-naming = disabled
+
+# Allow wildcard imports for Compose and common Android packages
+ktlint_standard_no-wildcard-imports = disabled
+
+# Allow trailing commas (common Kotlin convention for diffs)
+ktlint_standard_trailing-comma-on-call-site = disabled
+ktlint_standard_trailing-comma-on-declaration-site = disabled
+
+# Allow multi-line if/else without braces when single-expression
+ktlint_standard_multiline-expression-wrapping = disabled
+
+[*.xml]
+indent_size = 4
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{yml,yaml}]
+indent_size = 2
+
+[*.properties]
+charset = latin1
