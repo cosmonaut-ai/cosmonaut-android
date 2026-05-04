@@ -1,33 +1,26 @@
 package com.cosmonaut.app.data.remote
 
+import com.cosmonaut.app.auth.AuthManager
 import javax.inject.Inject
 import javax.inject.Singleton
 import okhttp3.Interceptor
 import okhttp3.Response
-import timber.log.Timber
 
 /**
- * OkHttp interceptor that attaches the JWT bearer token to all API requests.
- * The token provider will be wired up in Stage 2 (Authentication).
+ * OkHttp interceptor that attaches the cached JWT bearer token to all API requests.
+ * Uses [AuthManager.getCachedIdToken] for non-blocking token access.
+ * Token refresh on 401 is handled by [TokenAuthenticator].
  */
 @Singleton
-class AuthInterceptor @Inject constructor() : Interceptor {
-
-    @Volatile
-    private var token: String? = null
-
-    fun setToken(jwt: String?) {
-        token = jwt
-        Timber.d("Auth token %s", if (jwt != null) "set" else "cleared")
-    }
+class AuthInterceptor @Inject constructor(private val authManager: dagger.Lazy<AuthManager>,) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
-        val currentToken = token
+        val token = authManager.get().getCachedIdToken()
 
-        val request = if (currentToken != null) {
+        val request = if (token != null) {
             originalRequest.newBuilder()
-                .header("Authorization", "Bearer $currentToken")
+                .header("Authorization", "Bearer $token")
                 .build()
         } else {
             originalRequest

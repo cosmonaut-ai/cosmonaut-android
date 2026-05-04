@@ -1,9 +1,13 @@
 complexity:
   CyclomaticComplexMethod:
     active: true
+    ignoreAnnotated:
+      - "Composable"
   LongMethod:
     active: true
     allowedLines: 60
+    ignoreAnnotated:
+      - "Composable"
   LongParameterList:
     active: true
     allowedFunctionParameters: 8
@@ -16,6 +20,8 @@ complexity:
     allowedFunctionsPerClass: 15
     ignoreAnnotatedFunctions:
       - "dagger.Module"
+    ignoreAnnotated:
+      - "dagger.hilt.android.lifecycle.HiltViewModel"
   NestedBlockDepth:
     active: true
     allowedDepth: 5

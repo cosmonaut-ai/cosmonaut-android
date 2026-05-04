@@ -43,6 +43,17 @@ class CosmoPreferences @Inject constructor(private val dataStore: DataStore<Pref
         }
     }
 
+    val hasSeenCarousel: Flow<Boolean>
+        get() = dataStore.data.map { prefs ->
+            prefs[Keys.CAROUSEL_SEEN] ?: false
+        }
+
+    suspend fun setCarouselSeen(seen: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[Keys.CAROUSEL_SEEN] = seen
+        }
+    }
+
     suspend fun clear() {
         dataStore.edit { it.clear() }
     }
@@ -50,6 +61,7 @@ class CosmoPreferences @Inject constructor(private val dataStore: DataStore<Pref
     private object Keys {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
+        val CAROUSEL_SEEN = booleanPreferencesKey("carousel_seen")
     }
 
     enum class ThemeMode {

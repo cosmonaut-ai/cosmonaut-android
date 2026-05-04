@@ -35,26 +35,26 @@ object CosmoColors {
 
     // ── Dark Theme ──────────────────────────────────────────────────
 
-    val DarkBackground = Color(0xFF1A2332)
-    val DarkForeground = Color(0xFFF0F2F5)
-    val DarkCard = Color(0xFF24303F)
-    val DarkCardForeground = Color(0xFFF0F2F5)
-    val DarkPrimary = Color(0xFFF0D060) // Gold — the signature Cosmonaut color
-    val DarkPrimaryForeground = Color(0xFF1A2332)
-    val DarkPrimaryDepth = Color(0xFFB89830)
-    val DarkSecondary = Color(0xFF374A5C)
-    val DarkSecondaryForeground = Color(0xFFE0E4EC)
-    val DarkSecondaryDepth = Color(0xFF2B3B4A)
-    val DarkMuted = Color(0xFF2E3C4D)
-    val DarkMutedForeground = Color(0xFFB0BAC8)
-    val DarkAccent = Color(0xFF5C6B3A)
-    val DarkAccentForeground = Color(0xFFE8E0C8)
+    val DarkBackground = Color(0xFF131B26)
+    val DarkForeground = Color(0xFFF3F5F8)
+    val DarkCard = Color(0xFF1C2736)
+    val DarkCardForeground = Color(0xFFF3F5F8)
+    val DarkPrimary = Color(0xFFFFF1AE)
+    val DarkPrimaryForeground = Color(0xFF131B26)
+    val DarkPrimaryDepth = Color(0xFFD4B860)
+    val DarkSecondary = Color(0xFF2E4458)
+    val DarkSecondaryForeground = Color(0xFFDAE4F0)
+    val DarkSecondaryDepth = Color(0xFF1E3248)
+    val DarkMuted = Color(0xFF253848)
+    val DarkMutedForeground = Color(0xFFACBBC8)
+    val DarkAccent = Color(0xFF7A6F42)
+    val DarkAccentForeground = Color(0xFFEBE6D6)
     val DarkDestructive = Color(0xFFE53E7A)
     val DarkDestructiveForeground = Color(0xFFFFFFFF)
     val DarkDestructiveDepth = Color(0xFF7A1040)
-    val DarkBorder = Color(0xFF3D4D5E)
-    val DarkInput = Color(0xFF3D4D5E)
-    val DarkRing = Color(0xFF7B9AD0)
+    val DarkBorder = Color(0xFF344858)
+    val DarkInput = Color(0xFF344858)
+    val DarkRing = Color(0xFFFFF1AE)
 }
 
 /**

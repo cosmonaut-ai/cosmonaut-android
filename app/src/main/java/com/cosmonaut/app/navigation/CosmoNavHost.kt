@@ -9,17 +9,20 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.cosmonaut.app.ui.screens.auth.LoginScreen
 import com.cosmonaut.app.ui.screens.create.CreateScreen
 import com.cosmonaut.app.ui.screens.home.HomeScreen
+import com.cosmonaut.app.ui.screens.onboarding.OnboardingCarouselScreen
+import com.cosmonaut.app.ui.screens.onboarding.OnboardingScreen
 import com.cosmonaut.app.ui.screens.settings.SettingsScreen
 
 private const val TRANSITION_DURATION_MS = 300
 
 @Composable
-fun CosmoNavHost(navController: NavHostController, modifier: Modifier = Modifier,) {
+fun CosmoNavHost(navController: NavHostController, startDestination: CosmoRoute, modifier: Modifier = Modifier,) {
     NavHost(
         navController = navController,
-        startDestination = CosmoRoute.Home,
+        startDestination = startDestination,
         modifier = modifier,
         enterTransition = {
             fadeIn(animationSpec = tween(TRANSITION_DURATION_MS)) +
@@ -50,7 +53,40 @@ fun CosmoNavHost(navController: NavHostController, modifier: Modifier = Modifier
                 )
         },
     ) {
-        // Bottom Navigation destinations
+        // ── Auth Destinations ─────────────────────────────────────
+
+        composable<CosmoRoute.OnboardingCarousel> {
+            OnboardingCarouselScreen(
+                onComplete = {
+                    navController.navigate(CosmoRoute.Login) {
+                        popUpTo<CosmoRoute.OnboardingCarousel> { inclusive = true }
+                    }
+                },
+            )
+        }
+
+        composable<CosmoRoute.Login> {
+            LoginScreen(
+                onAuthSuccess = {
+                    navController.navigate(CosmoRoute.Onboarding) {
+                        popUpTo<CosmoRoute.Login> { inclusive = true }
+                    }
+                },
+            )
+        }
+
+        composable<CosmoRoute.Onboarding> {
+            OnboardingScreen(
+                onComplete = {
+                    navController.navigate(CosmoRoute.Home) {
+                        popUpTo<CosmoRoute.Onboarding> { inclusive = true }
+                    }
+                },
+            )
+        }
+
+        // ── Bottom Navigation Destinations ────────────────────────
+
         composable<CosmoRoute.Home> {
             HomeScreen()
         }

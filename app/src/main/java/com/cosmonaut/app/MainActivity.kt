@@ -4,8 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -14,7 +16,11 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -22,30 +28,109 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.cosmonaut.app.auth.AuthManager
+import com.cosmonaut.app.auth.AuthState
+import com.cosmonaut.app.data.local.CosmoPreferences
 import com.cosmonaut.app.navigation.BottomNavItem
 import com.cosmonaut.app.navigation.CosmoNavHost
+import com.cosmonaut.app.navigation.CosmoRoute
 import com.cosmonaut.app.ui.components.CosmoTopAppBar
 import com.cosmonaut.app.ui.theme.CosmoTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    @Inject lateinit var authManager: AuthManager
+
+    @Inject lateinit var preferences: CosmoPreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        val splashScreen = installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        splashScreen.setKeepOnScreenCondition {
+            authManager.authState.value is AuthState.Unknown ||
+                authManager.authState.value is AuthState.Loading
+        }
+
         setContent {
             CosmoTheme {
-                CosmoAppContent()
+                CosmoAppContent(
+                    authManager = authManager,
+                    preferences = preferences,
+                )
             }
         }
     }
 }
 
 @Composable
-private fun CosmoAppContent() {
+private fun CosmoAppContent(authManager: AuthManager, preferences: CosmoPreferences,) {
+    val authState by authManager.authState.collectAsState()
+    val hasSeenCarousel by preferences.hasSeenCarousel.collectAsState(initial = true)
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        authManager.initialize()
+    }
+
+    when (authState) {
+        is AuthState.Unknown, is AuthState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(color = CosmoTheme.colors.primary)
+            }
+        }
+
+        is AuthState.Unauthenticated -> {
+            val startDestination: CosmoRoute = if (!hasSeenCarousel) {
+                CosmoRoute.OnboardingCarousel
+            } else {
+                CosmoRoute.Login
+            }
+
+            UnauthenticatedShell(
+                startDestination = startDestination,
+                onCarouselSeen = { scope.launch { preferences.setCarouselSeen(true) } },
+            )
+        }
+
+        is AuthState.Authenticated -> {
+            AuthenticatedShell()
+        }
+    }
+}
+
+@Composable
+private fun UnauthenticatedShell(startDestination: CosmoRoute, onCarouselSeen: () -> Unit,) {
+    val navController = rememberNavController()
+
+    LaunchedEffect(startDestination) {
+        if (startDestination is CosmoRoute.Login) {
+            onCarouselSeen()
+        }
+    }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = CosmoTheme.colors.background,
+    ) { innerPadding ->
+        CosmoNavHost(
+            navController = navController,
+            startDestination = startDestination,
+            modifier = Modifier.padding(innerPadding),
+        )
+    }
+}
+
+@Composable
+private fun AuthenticatedShell() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -58,9 +143,7 @@ private fun CosmoAppContent() {
         modifier = Modifier.fillMaxSize(),
         containerColor = CosmoTheme.colors.background,
         topBar = {
-            CosmoTopAppBar(
-                title = currentNavItem?.label ?: "Cosmonaut",
-            )
+            CosmoTopAppBar(title = currentNavItem?.label ?: "Cosmonaut")
         },
         bottomBar = {
             CosmoBottomBar(
@@ -79,6 +162,7 @@ private fun CosmoAppContent() {
     ) { innerPadding ->
         CosmoNavHost(
             navController = navController,
+            startDestination = CosmoRoute.Home,
             modifier = Modifier.padding(innerPadding),
         )
     }

@@ -19,7 +19,10 @@ sealed interface CosmoRoute {
     @Serializable
     data object Settings : CosmoRoute
 
-    // ── Auth (will be implemented in Stage 2) ───────────────────────
+    // ── Auth ────────────────────────────────────────────────────────
+
+    @Serializable
+    data object OnboardingCarousel : CosmoRoute
 
     @Serializable
     data object Login : CosmoRoute

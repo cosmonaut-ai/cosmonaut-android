@@ -1,7 +1,6 @@
 package com.cosmonaut.app.ui.theme
 
 import android.app.Activity
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -54,7 +53,7 @@ private val M3LightColorScheme = lightColorScheme(
 val LocalCosmoColors = staticCompositionLocalOf { CosmoDarkColorScheme }
 
 @Composable
-fun CosmoTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit,) {
+fun CosmoTheme(darkTheme: Boolean = true, content: @Composable () -> Unit,) {
     val m3ColorScheme = if (darkTheme) M3DarkColorScheme else M3LightColorScheme
     val cosmoColors = if (darkTheme) CosmoDarkColorScheme else CosmoLightColorScheme
 
