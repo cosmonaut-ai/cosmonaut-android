@@ -43,6 +43,7 @@ android {
             dimension = "environment"
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
+            manifestPlaceholders["cognitoRedirectScheme"] = "cosmonaut.dev"
             buildConfigField("String", "API_BASE_URL", "\"https://api.dev.cosmonaut-ai.com\"")
             buildConfigField("String", "STREAMING_BASE_URL", "\"https://streaming.dev.cosmonaut-ai.com\"")
             buildConfigField("String", "COGNITO_USER_POOL_ID", "\"us-east-2_GWLKBPNKF\"")
@@ -53,6 +54,7 @@ android {
         }
         create("prod") {
             dimension = "environment"
+            manifestPlaceholders["cognitoRedirectScheme"] = "cosmonaut"
             buildConfigField("String", "API_BASE_URL", "\"https://api.cosmonaut-ai.com\"")
             buildConfigField("String", "STREAMING_BASE_URL", "\"https://streaming.cosmonaut-ai.com\"")
             buildConfigField("String", "COGNITO_USER_POOL_ID", "\"us-east-2_NE7ZsAjT9\"")
@@ -79,6 +81,7 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -91,6 +94,9 @@ kotlin {
 }
 
 dependencies {
+    // Core library desugaring
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+
     // Compose BOM
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)
@@ -118,6 +124,7 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+    implementation(libs.hilt.lifecycle.viewmodel.compose)
 
     // Networking
     implementation(libs.retrofit)
@@ -126,6 +133,14 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.okhttp.sse)
     implementation(libs.kotlinx.serialization.json)
+
+    // AWS Amplify
+    implementation(libs.amplify.core)
+    implementation(libs.amplify.core.kotlin)
+    implementation(libs.amplify.auth.cognito)
+
+    // Browser (Custom Tabs for OAuth)
+    implementation(libs.androidx.browser)
 
     // Image Loading
     implementation(libs.coil.compose)

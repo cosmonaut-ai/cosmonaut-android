@@ -10,10 +10,13 @@
 
     <!-- Placeholder screens -->
     <string name="home_title">Your Stories</string>
-    <string name="home_subtitle">Your worlds will appear here.\nSign in to get started.</string>
+    <string name="home_subtitle">Your worlds will appear here.</string>
     <string name="create_title">Create a Story</string>
     <string name="create_subtitle">Describe your world and let AI\nbring it to life.</string>
     <string name="settings_title">Settings</string>
+
+    <!-- Auth -->
+    <string name="session_expired">Session expired. Please sign in again.</string>
 
     <!-- General -->
     <string name="app_name_brand">Cosmonaut</string>

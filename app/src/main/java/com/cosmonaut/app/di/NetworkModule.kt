@@ -3,6 +3,7 @@ package com.cosmonaut.app.di
 import com.cosmonaut.app.BuildConfig
 import com.cosmonaut.app.data.remote.AuthInterceptor
 import com.cosmonaut.app.data.remote.CosmoApiService
+import com.cosmonaut.app.data.remote.TokenAuthenticator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -48,9 +49,11 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(
         authInterceptor: AuthInterceptor,
+        tokenAuthenticator: TokenAuthenticator,
         loggingInterceptor: HttpLoggingInterceptor,
     ): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
+        .authenticator(tokenAuthenticator)
         .addInterceptor(loggingInterceptor)
         .connectTimeout(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .readTimeout(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
@@ -72,8 +75,12 @@ object NetworkModule {
     @Provides
     @Singleton
     @Named("streaming")
-    fun provideStreamingOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient = OkHttpClient.Builder()
+    fun provideStreamingOkHttpClient(
+        authInterceptor: AuthInterceptor,
+        tokenAuthenticator: TokenAuthenticator,
+    ): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
+        .authenticator(tokenAuthenticator)
         .connectTimeout(SSE_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .readTimeout(SSE_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .build()

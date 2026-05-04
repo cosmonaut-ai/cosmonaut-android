@@ -7,6 +7,9 @@ import coil3.disk.DiskCache
 import coil3.disk.directory
 import coil3.memory.MemoryCache
 import coil3.request.crossfade
+import com.amplifyframework.AmplifyException
+import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin
+import com.amplifyframework.core.Amplify
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 
@@ -22,7 +25,19 @@ class CosmoApp :
             Timber.plant(Timber.DebugTree())
         }
 
+        initializeAmplify()
+
         Timber.i("Cosmonaut app initialized — env: %s", BuildConfig.BUILD_TYPE)
+    }
+
+    private fun initializeAmplify() {
+        try {
+            Amplify.addPlugin(AWSCognitoAuthPlugin())
+            Amplify.configure(applicationContext)
+            Timber.i("Amplify configured successfully")
+        } catch (expected: AmplifyException) {
+            Timber.e(expected, "Failed to configure Amplify")
+        }
     }
 
     override fun newImageLoader(context: android.content.Context): ImageLoader = ImageLoader.Builder(context)
