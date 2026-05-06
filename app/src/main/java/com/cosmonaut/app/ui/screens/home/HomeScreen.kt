@@ -1,48 +1,208 @@
 package com.cosmonaut.app.ui.screens.home
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.RocketLaunch
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cosmonaut.app.ui.components.CosmoEmptyState
+import com.cosmonaut.app.ui.components.CosmoErrorState
+import com.cosmonaut.app.ui.components.DeleteConfirmationDialog
+import com.cosmonaut.app.ui.components.WorldCard
+import com.cosmonaut.app.ui.components.WorldCardSkeleton
 import com.cosmonaut.app.ui.theme.CosmoTheme
 
+private const val STAGGER_DELAY_MS = 60
+private const val PREFETCH_THRESHOLD = 3
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier,) {
-    Column(
-        modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+fun HomeScreen(
+    onNavigateToWorld: (String) -> Unit,
+    onNavigateToStoryNode: (String, String) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: HomeViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is HomeEvent.NavigateToWorld -> onNavigateToWorld(event.worldId)
+                is HomeEvent.NavigateToStoryNode ->
+                    onNavigateToStoryNode(event.worldId, event.nodeId)
+                is HomeEvent.ShowMessage -> snackbarHostState.showSnackbar(
+                    message = event.message,
+                    duration = SnackbarDuration.Short,
+                )
+            }
+        }
+    }
+
+    state.worldToDelete?.let { world ->
+        DeleteConfirmationDialog(
+            title = "Delete Story",
+            message = "Are you sure you want to delete " +
+                "\"${world.title ?: "this story"}\"? " +
+                "This action cannot be undone.",
+            onConfirm = viewModel::confirmDelete,
+            onDismiss = viewModel::cancelDelete,
+        )
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        when {
+            state.isLoading -> LoadingState()
+            state.error != null && state.worlds.isEmpty() -> {
+                CosmoErrorState(
+                    message = state.error!!,
+                    onRetry = viewModel::loadWorlds,
+                )
+            }
+            state.worlds.isEmpty() -> {
+                CosmoEmptyState(
+                    title = "No Stories Yet",
+                    subtitle = "Create your first interactive story\nand start exploring!",
+                )
+            }
+            else -> {
+                PullToRefreshBox(
+                    isRefreshing = state.isRefreshing,
+                    onRefresh = viewModel::refresh,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    WorldList(
+                        state = state,
+                        onWorldClick = viewModel::onWorldClick,
+                        onPlayClick = viewModel::onPlayClick,
+                        onDeleteClick = viewModel::requestDelete,
+                        onLoadMore = viewModel::loadMore,
+                    )
+                }
+            }
+        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
+    }
+}
+
+@Composable
+private fun LoadingState() {
+    LazyColumn(
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Icon(
-            imageVector = Icons.Outlined.RocketLaunch,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = CosmoTheme.colors.primary,
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Your Stories",
-            style = MaterialTheme.typography.headlineMedium,
-            color = CosmoTheme.colors.foreground,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Your worlds will appear here.\nSign in to get started.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = CosmoTheme.colors.mutedForeground,
-            textAlign = TextAlign.Center,
-        )
+        item {
+            SectionHeader()
+        }
+        items(3) {
+            WorldCardSkeleton()
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(modifier: Modifier = Modifier) {
+    Text(
+        text = "Your Stories",
+        style = MaterialTheme.typography.titleLarge,
+        color = CosmoTheme.colors.foreground,
+        fontWeight = FontWeight.Bold,
+        modifier = modifier.padding(vertical = 8.dp),
+    )
+}
+
+@Composable
+private fun WorldList(
+    state: HomeUiState,
+    onWorldClick: (com.cosmonaut.app.data.remote.dto.WorldResponse) -> Unit,
+    onPlayClick: (com.cosmonaut.app.data.remote.dto.WorldResponse) -> Unit,
+    onDeleteClick: (com.cosmonaut.app.data.remote.dto.WorldResponse) -> Unit,
+    onLoadMore: () -> Unit,
+) {
+    val listState = rememberLazyListState()
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            val totalItems = listState.layoutInfo.totalItemsCount
+            lastVisibleIndex >= totalItems - PREFETCH_THRESHOLD && state.hasMore && !state.isLoadingMore
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore) onLoadMore()
+    }
+
+    LazyColumn(
+        state = listState,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        item {
+            SectionHeader()
+        }
+
+        itemsIndexed(
+            items = state.worlds,
+            key = { _, world -> world.id },
+        ) { index, world ->
+            WorldCard(
+                world = world,
+                onCardClick = { onWorldClick(world) },
+                onPlayClick = { onPlayClick(world) },
+                onDeleteClick = { onDeleteClick(world) },
+                entranceDelay = index * STAGGER_DELAY_MS,
+            )
+        }
+
+        if (state.isLoadingMore) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator(
+                        color = CosmoTheme.colors.primary,
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                    )
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+        }
     }
 }
