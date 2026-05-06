@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.cosmonaut.app.R
+import com.cosmonaut.app.ui.components.GlassCard
 import com.cosmonaut.app.ui.screens.auth.components.ForgotPasswordForm
 import com.cosmonaut.app.ui.screens.auth.components.SignInForm
 import com.cosmonaut.app.ui.screens.auth.components.SignUpForm
@@ -61,8 +62,6 @@ import com.cosmonaut.app.ui.theme.OrbitronFontFamily
 private const val SLIDE_OFFSET_DIVISOR = 3
 private const val GLOW_RADIUS_FRACTION = 0.6f
 private const val GLOW_ALPHA = 0.07f
-private const val CARD_BG_ALPHA = 0.8f
-private const val BORDER_ALPHA = 0.5f
 private const val ILLUSTRATION_ALPHA = 0.9f
 private const val IMAGE_GLOW_ALPHA = 0.15f
 private const val IMAGE_GLOW_RADIUS_FRACTION = 1.2f
@@ -357,23 +356,6 @@ private fun AstronautIllustration(modifier: Modifier = Modifier) {
                 .alpha(ILLUSTRATION_ALPHA),
             contentScale = ContentScale.Fit,
         )
-    }
-}
-
-@Composable
-fun GlassCard(modifier: Modifier = Modifier, content: @Composable () -> Unit,) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(CosmoTheme.colors.card.copy(alpha = CARD_BG_ALPHA))
-            .border(
-                width = 1.dp,
-                color = CosmoTheme.colors.border.copy(alpha = BORDER_ALPHA),
-                shape = RoundedCornerShape(16.dp),
-            ),
-    ) {
-        content()
     }
 }
 

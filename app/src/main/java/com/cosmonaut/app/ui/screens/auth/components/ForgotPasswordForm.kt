@@ -24,6 +24,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.cosmonaut.app.ui.components.CosmoButton
 import com.cosmonaut.app.ui.theme.CosmoTheme
 
 private const val RESET_CODE_LENGTH = 6

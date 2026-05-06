@@ -16,6 +16,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.cosmonaut.app.ui.components.CosmoButton
 import com.cosmonaut.app.ui.theme.CosmoTheme
 
 private const val VERIFICATION_CODE_LENGTH = 6

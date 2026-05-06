@@ -36,6 +36,60 @@ This runs, in order:
 
 Do NOT skip this step. Do NOT move on to the next task until this passes. The user should never encounter a broken build.
 
+## Visual Verification Workflow (MANDATORY for UI changes)
+
+**After ANY change that touches UI — layout, styles, colors, images, animations, navigation transitions — you MUST visually verify on the emulator using ADB before considering the change complete.**
+
+### ADB Setup
+
+```bash
+export PATH="$PATH:$HOME/Library/Android/sdk/platform-tools"
+```
+
+### Workflow
+
+1. **Build and install**:
+   ```bash
+   ./gradlew assembleDevDebug
+   adb install -r app/build/outputs/apk/dev/debug/app-dev-debug.apk
+   ```
+
+2. **Relaunch the app** (force-stop ensures fresh state):
+   ```bash
+   adb shell am force-stop com.cosmonaut.app.dev
+   adb shell am start -n com.cosmonaut.app.dev/com.cosmonaut.app.MainActivity
+   ```
+
+3. **Take and inspect a screenshot**:
+   ```bash
+   adb exec-out screencap -p > screenshot.png
+   ```
+   Read the screenshot file to visually inspect it.
+
+4. **Navigate if needed** (tap, swipe, type):
+   ```bash
+   adb shell input tap X Y          # Tap at coordinates
+   adb shell input swipe X1 Y1 X2 Y2 300  # Swipe gesture
+   adb shell input text "hello"     # Type text
+   ```
+
+5. **Clear data** to reset onboarding/auth state if needed:
+   ```bash
+   adb shell pm clear com.cosmonaut.app.dev
+   ```
+
+### Critical Image Inspection Rules
+
+When examining screenshots:
+
+- **Actually LOOK at the screenshot with a critical eye.** Do NOT assume your change worked. Compare the before and after carefully.
+- **Check edges and boundaries** — glow effects, shadows, and overlays are common sources of clipping artifacts. Look for hard rectangular cutoffs.
+- **Check ALL states** — enabled, disabled, pressed, loading. Each state must look correct.
+- **Compare to reference** — if matching a web design, open the web screenshot side-by-side and scrutinize differences in color, proportion, spacing, and effects.
+- **Zoom in mentally** on the area you changed. If you modified a button, inspect the button at pixel level. If you changed a glow, trace the glow edge all the way around.
+- **If something looks "probably fine"**, it probably isn't. Take a closer look.
+- **Clean up screenshots** when done: `rm -f screenshot*.png`
+
 ### Quick compile-only check (use sparingly, e.g. mid-refactor)
 
 ```bash

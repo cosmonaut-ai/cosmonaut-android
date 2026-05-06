@@ -29,32 +29,48 @@ object CosmoColors {
     val LightDestructive = Color(0xFFE53E7A)
     val LightDestructiveForeground = Color(0xFFFFFFFF)
     val LightDestructiveDepth = Color(0xFF991E4F)
+    val LightOutline = Color(0xFFE2E4EA)
+    val LightOutlineForeground = Color(0xFF2D3D4F)
+    val LightOutlineDepth = Color(0xFFCED1D9)
     val LightBorder = Color(0xFFE8E9F0)
     val LightInput = Color(0xFFE8E9F0)
     val LightRing = Color(0xFF4B6CB7)
 
     // ── Dark Theme ──────────────────────────────────────────────────
 
-    val DarkBackground = Color(0xFF131B26)
+    val DarkBackground = Color(0xFF121A21)
     val DarkForeground = Color(0xFFF3F5F8)
-    val DarkCard = Color(0xFF1C2736)
+    val DarkCard = Color(0xFF1B2731)
     val DarkCardForeground = Color(0xFFF3F5F8)
     val DarkPrimary = Color(0xFFFFF1AE)
-    val DarkPrimaryForeground = Color(0xFF131B26)
+    val DarkPrimaryForeground = Color(0xFF121A21)
     val DarkPrimaryDepth = Color(0xFFD4B860)
-    val DarkSecondary = Color(0xFF2E4458)
-    val DarkSecondaryForeground = Color(0xFFDAE4F0)
-    val DarkSecondaryDepth = Color(0xFF1E3248)
-    val DarkMuted = Color(0xFF253848)
+    val DarkSecondary = Color(0xFF2C445A)
+    val DarkSecondaryForeground = Color(0xFF7F92A2)
+    val DarkSecondaryDepth = Color(0xFF193249)
+    val DarkMuted = Color(0xFF22303C)
     val DarkMutedForeground = Color(0xFFACBBC8)
     val DarkAccent = Color(0xFF7A6F42)
     val DarkAccentForeground = Color(0xFFEBE6D6)
-    val DarkDestructive = Color(0xFFE53E7A)
+    val DarkDestructive = Color(0xFFA0478D)
     val DarkDestructiveForeground = Color(0xFFFFFFFF)
-    val DarkDestructiveDepth = Color(0xFF7A1040)
+    val DarkDestructiveDepth = Color(0xFF840A68)
+    val DarkOutline = Color(0xFF22303C)
+    val DarkOutlineForeground = Color(0xFFFFFFFF)
+    val DarkOutlineDepth = Color(0xFF324757)
+    val DarkOutlineBorder = Color(0xFF2E4251)
     val DarkBorder = Color(0xFF344858)
     val DarkInput = Color(0xFF344858)
     val DarkRing = Color(0xFFFFF1AE)
+
+    // ── Graph / Chart Colors ──────────────────────────────────────────
+
+    val GraphStart = Color(0xFF22C55E) // green-500 — root/start node ring
+    val GraphEnd = Color(0xFFF97316) // orange-500 — ending node ring
+    val GraphCurrentLight = Color(0xFF6366F1) // chart-2 in light theme (indigo-500)
+    val GraphCurrentDark = Color(0xFF818CF8) // chart-2 in dark theme (indigo-400)
+    val GraphDotLight = Color(0xFFCBD5E1) // muted dot grid in light theme
+    val GraphDotDark = Color(0xFF475569) // muted dot grid in dark theme
 }
 
 /**
@@ -79,9 +95,17 @@ data class CosmoColorScheme(
     val destructive: Color,
     val destructiveForeground: Color,
     val destructiveDepth: Color,
+    val outline: Color,
+    val outlineForeground: Color,
+    val outlineDepth: Color,
+    val outlineBorder: Color,
     val border: Color,
     val input: Color,
     val ring: Color,
+    val graphStart: Color,
+    val graphEnd: Color,
+    val graphCurrent: Color,
+    val graphDot: Color,
 )
 
 val CosmoLightColorScheme = CosmoColorScheme(
@@ -102,9 +126,17 @@ val CosmoLightColorScheme = CosmoColorScheme(
     destructive = CosmoColors.LightDestructive,
     destructiveForeground = CosmoColors.LightDestructiveForeground,
     destructiveDepth = CosmoColors.LightDestructiveDepth,
+    outline = CosmoColors.LightOutline,
+    outlineForeground = CosmoColors.LightOutlineForeground,
+    outlineDepth = CosmoColors.LightOutlineDepth,
+    outlineBorder = CosmoColors.LightBorder,
     border = CosmoColors.LightBorder,
     input = CosmoColors.LightInput,
     ring = CosmoColors.LightRing,
+    graphStart = CosmoColors.GraphStart,
+    graphEnd = CosmoColors.GraphEnd,
+    graphCurrent = CosmoColors.GraphCurrentLight,
+    graphDot = CosmoColors.GraphDotLight,
 )
 
 val CosmoDarkColorScheme = CosmoColorScheme(
@@ -125,7 +157,15 @@ val CosmoDarkColorScheme = CosmoColorScheme(
     destructive = CosmoColors.DarkDestructive,
     destructiveForeground = CosmoColors.DarkDestructiveForeground,
     destructiveDepth = CosmoColors.DarkDestructiveDepth,
+    outline = CosmoColors.DarkOutline,
+    outlineForeground = CosmoColors.DarkOutlineForeground,
+    outlineDepth = CosmoColors.DarkOutlineDepth,
+    outlineBorder = CosmoColors.DarkOutlineBorder,
     border = CosmoColors.DarkBorder,
     input = CosmoColors.DarkInput,
     ring = CosmoColors.DarkRing,
+    graphStart = CosmoColors.GraphStart,
+    graphEnd = CosmoColors.GraphEnd,
+    graphCurrent = CosmoColors.GraphCurrentDark,
+    graphDot = CosmoColors.GraphDotDark,
 )

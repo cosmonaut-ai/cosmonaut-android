@@ -35,7 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cosmonaut.app.R
-import com.cosmonaut.app.ui.screens.auth.components.CosmoButton
+import com.cosmonaut.app.ui.components.CosmoButton
 import com.cosmonaut.app.ui.theme.CosmoTheme
 import com.cosmonaut.app.ui.theme.OrbitronFontFamily
 import kotlinx.coroutines.launch

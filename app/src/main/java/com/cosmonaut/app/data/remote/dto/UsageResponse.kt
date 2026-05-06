@@ -5,6 +5,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UsageResponse(
+    @kotlinx.serialization.Transient
+    val fetchedAtMs: Long = System.currentTimeMillis(),
     val tier: String = "free",
     val username: String? = null,
     @SerialName("is_onboarded")

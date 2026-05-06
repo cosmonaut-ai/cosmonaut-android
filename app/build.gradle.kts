@@ -139,12 +139,20 @@ dependencies {
     implementation(libs.amplify.core.kotlin)
     implementation(libs.amplify.auth.cognito)
 
+    // Store5 (data caching — TanStack Query equivalent)
+    implementation(libs.store5)
+
     // Browser (Custom Tabs for OAuth)
     implementation(libs.androidx.browser)
 
     // Image Loading
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+
+    // Media3 (Audio playback)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.media3.ui.compose)
 
     // Logging
     implementation(libs.timber)

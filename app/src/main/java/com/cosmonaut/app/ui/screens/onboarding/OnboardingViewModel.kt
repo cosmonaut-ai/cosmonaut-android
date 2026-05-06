@@ -3,9 +3,7 @@ package com.cosmonaut.app.ui.screens.onboarding
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cosmonaut.app.data.local.CosmoPreferences
-import com.cosmonaut.app.data.remote.CosmoApiService
-import com.cosmonaut.app.data.remote.dto.NewsletterRequest
-import com.cosmonaut.app.data.remote.dto.SetUsernameRequest
+import com.cosmonaut.app.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
@@ -44,7 +42,7 @@ sealed interface OnboardingEvent {
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
-    private val apiService: CosmoApiService,
+    private val userRepository: UserRepository,
     private val preferences: CosmoPreferences,
 ) : ViewModel() {
 
@@ -64,7 +62,7 @@ class OnboardingViewModel @Inject constructor(
     private fun checkIfAlreadyOnboarded() {
         viewModelScope.launch {
             try {
-                val usage = apiService.getUsage()
+                val usage = userRepository.getUsage()
                 if (usage.isOnboarded) {
                     preferences.setOnboardingCompleted(true)
                     _events.emit(OnboardingEvent.NavigateToDashboard)
@@ -101,11 +99,11 @@ class OnboardingViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isSubmitting = true, errorMessage = null) }
             try {
-                apiService.setUsername(SetUsernameRequest(username = state.username.trim()))
+                userRepository.setUsername(state.username.trim())
 
                 if (state.newsletterOptIn) {
                     try {
-                        apiService.updateNewsletter(NewsletterRequest(optedIn = true))
+                        userRepository.updateNewsletter(true)
                     } catch (expected: Exception) {
                         Timber.w(expected, "Newsletter opt-in failed — non-blocking")
                     }
@@ -146,7 +144,7 @@ class OnboardingViewModel @Inject constructor(
         usernameCheckJob = viewModelScope.launch {
             delay(USERNAME_CHECK_DEBOUNCE_MS)
             try {
-                val response = apiService.checkUsernameAvailability(trimmed)
+                val response = userRepository.checkUsernameAvailability(trimmed)
                 _uiState.update {
                     it.copy(
                         usernameStatus = if (response.available) {

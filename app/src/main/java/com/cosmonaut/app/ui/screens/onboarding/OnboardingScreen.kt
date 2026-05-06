@@ -44,8 +44,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.cosmonaut.app.R
-import com.cosmonaut.app.ui.screens.auth.GlassCard
-import com.cosmonaut.app.ui.screens.auth.components.CosmoButton
+import com.cosmonaut.app.ui.components.CosmoButton
+import com.cosmonaut.app.ui.components.GlassCard
 import com.cosmonaut.app.ui.screens.auth.components.cosmoTextFieldColors
 import com.cosmonaut.app.ui.theme.CosmoTheme
 import com.cosmonaut.app.ui.theme.OrbitronFontFamily
