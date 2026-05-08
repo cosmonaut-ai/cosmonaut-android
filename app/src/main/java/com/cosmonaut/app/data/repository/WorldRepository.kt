@@ -67,6 +67,8 @@ class WorldRepository @Inject constructor(
         progressStore.stream(StoreReadRequest.cached(WorldProgressKey(worldId), refresh = true))
             .firstData()
 
+    suspend fun getFeaturedWorlds(): List<WorldResponse> = apiService.getFeaturedWorlds()
+
     suspend fun createWorld(request: CreateWorldRequest): WorldResponse {
         val world = apiService.createWorld(request)
         invalidateWorldList()
@@ -114,11 +116,9 @@ class WorldRepository @Inject constructor(
         null
     }
 
-    suspend fun createInviteToken(worldId: String): InviteTokenResponse =
-        apiService.createInviteToken(worldId)
+    suspend fun createInviteToken(worldId: String): InviteTokenResponse = apiService.createInviteToken(worldId)
 
-    suspend fun deleteInviteToken(worldId: String) =
-        apiService.deleteInviteToken(worldId)
+    suspend fun deleteInviteToken(worldId: String) = apiService.deleteInviteToken(worldId)
 
     suspend fun batchLookupUsers(ids: List<String>): List<UserInfoResponse> {
         if (ids.isEmpty()) return emptyList()

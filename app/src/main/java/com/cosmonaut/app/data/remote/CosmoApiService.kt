@@ -56,6 +56,9 @@ interface CosmoApiService {
     @GET("worlds/")
     suspend fun getWorlds(@Query("cursor") cursor: String? = null): PaginatedWorldsResponse
 
+    @GET("worlds/featured")
+    suspend fun getFeaturedWorlds(): List<WorldResponse>
+
     @GET("worlds/{worldId}")
     suspend fun getWorld(@Path("worldId") worldId: String, @Query("invite") invite: String? = null,): WorldResponse
 

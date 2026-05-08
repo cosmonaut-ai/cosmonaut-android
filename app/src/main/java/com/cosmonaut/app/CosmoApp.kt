@@ -41,7 +41,7 @@ class CosmoApp :
     }
 
     override fun newImageLoader(context: android.content.Context): ImageLoader = ImageLoader.Builder(context)
-        .crossfade(true)
+        .crossfade(CROSSFADE_DURATION_MS)
         .memoryCache {
             MemoryCache.Builder()
                 .maxSizePercent(context, MEMORY_CACHE_PERCENT)
@@ -57,6 +57,7 @@ class CosmoApp :
 
     companion object {
         private const val MEMORY_CACHE_PERCENT = 0.25
-        private const val DISK_CACHE_PERCENT = 0.02
+        private const val DISK_CACHE_PERCENT = 0.05
+        private const val CROSSFADE_DURATION_MS = 300
     }
 }

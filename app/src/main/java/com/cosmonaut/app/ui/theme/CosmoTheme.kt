@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -53,9 +54,11 @@ private val M3LightColorScheme = lightColorScheme(
 val LocalCosmoColors = staticCompositionLocalOf { CosmoDarkColorScheme }
 
 @Composable
-fun CosmoTheme(darkTheme: Boolean = true, content: @Composable () -> Unit,) {
+fun CosmoTheme(darkTheme: Boolean = true, content: @Composable () -> Unit) {
     val m3ColorScheme = if (darkTheme) M3DarkColorScheme else M3LightColorScheme
     val cosmoColors = if (darkTheme) CosmoDarkColorScheme else CosmoLightColorScheme
+    val reducedMotion = isReducedMotionEnabled()
+    val motionConfig = remember(reducedMotion) { CosmoMotionConfig(isReducedMotion = reducedMotion) }
 
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -65,7 +68,10 @@ fun CosmoTheme(darkTheme: Boolean = true, content: @Composable () -> Unit,) {
         }
     }
 
-    CompositionLocalProvider(LocalCosmoColors provides cosmoColors) {
+    CompositionLocalProvider(
+        LocalCosmoColors provides cosmoColors,
+        LocalCosmoMotion provides motionConfig,
+    ) {
         MaterialTheme(
             colorScheme = m3ColorScheme,
             typography = CosmoTypography,

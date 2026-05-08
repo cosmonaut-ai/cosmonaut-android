@@ -501,8 +501,6 @@ Modify the Explorer tier across the full stack:
   - TalkBack compatibility for all screens
   - Content descriptions for all images and icons
   - Focus management for screen readers
-  - Touch target minimums (48dp)
-  - Color contrast verification (WCAG 2.1 AA minimum)
   - Keyboard/D-pad navigation support
   - `semantics` modifiers on all interactive composables
   - Text scaling support (user font size preference)
@@ -517,9 +515,8 @@ Modify the Explorer tier across the full stack:
 - **Reduced Motion Support**:
   - Respect `Settings.Global.ANIMATOR_DURATION_SCALE`
   - Disable non-essential animations when system animations are off
-- **Dark/Light Theme Polish**:
-  - Verify all screens in both themes
-  - Ensure consistent contrast and readability
+- **Dark Theme Polish**:
+  - Verify all screens in dark theme for visual consistency
 
 ### Exit Criteria
 
@@ -528,7 +525,7 @@ Modify the Explorer tier across the full stack:
 - All animations feel fluid and purposeful
 - Startup time under 1 second on mid-range device
 - No memory leaks detected by LeakCanary
-- Both dark and light themes are visually polished
+- Dark theme is visually polished across all screens
 
 ---
 

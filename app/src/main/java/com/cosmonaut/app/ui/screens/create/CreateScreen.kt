@@ -42,6 +42,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -49,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.cosmonaut.app.ui.components.CosmoButton
 import com.cosmonaut.app.ui.components.CosmoButtonVariant
+import com.cosmonaut.app.ui.components.CosmoHaptics
 import com.cosmonaut.app.ui.components.CosmoIconButton
 import com.cosmonaut.app.ui.components.CosmoSegmentedControl
 import com.cosmonaut.app.ui.components.GlassCard
@@ -69,11 +73,15 @@ fun CreateScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val view = LocalView.current
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                is CreateEvent.NavigateToWorld -> onNavigateToWorld(event.worldId)
+                is CreateEvent.NavigateToWorld -> {
+                    CosmoHaptics.onConfirm(view)
+                    onNavigateToWorld(event.worldId)
+                }
                 is CreateEvent.ShowMessage -> snackbarHostState.showSnackbar(
                     message = event.message,
                     duration = SnackbarDuration.Short,
@@ -97,6 +105,7 @@ fun CreateScreen(
                 style = MaterialTheme.typography.titleLarge,
                 color = CosmoTheme.colors.foreground,
                 fontWeight = FontWeight.Bold,
+                modifier = Modifier.semantics { heading() },
             )
 
             if (state.worldsAtLimit) {

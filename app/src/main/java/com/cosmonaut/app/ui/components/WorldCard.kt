@@ -1,9 +1,13 @@
 package com.cosmonaut.app.ui.components
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,28 +29,40 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.cosmonaut.app.data.remote.dto.WorldResponse
+import com.cosmonaut.app.ui.theme.CosmoMotion
 import com.cosmonaut.app.ui.theme.CosmoTheme
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 private const val CARD_ENTRANCE_DURATION = 400
 private const val GRADIENT_PLACEHOLDER_HEIGHT = 140
 private const val IMAGE_HEIGHT = 140
 private const val ISO_DATE_PREFIX_LENGTH = 10
+private const val PRESS_SCALE = 0.97f
+private const val SLIDE_OFFSET_DP = 24f
+private val EntranceEasing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
 
 @Composable
 fun WorldCard(
@@ -57,16 +73,56 @@ fun WorldCard(
     modifier: Modifier = Modifier,
     entranceDelay: Int = 0,
 ) {
-    val alpha = remember { Animatable(0f) }
+    val isReducedMotion = CosmoMotion.config.isReducedMotion
+    val alpha = remember { Animatable(if (isReducedMotion) 1f else 0f) }
+    val offsetY = remember { Animatable(if (isReducedMotion) 0f else SLIDE_OFFSET_DP) }
+
     LaunchedEffect(world.id) {
-        kotlinx.coroutines.delay(entranceDelay.toLong())
-        alpha.animateTo(1f, animationSpec = tween(CARD_ENTRANCE_DURATION))
+        if (!isReducedMotion) {
+            delay(entranceDelay.toLong())
+            coroutineScope {
+                launch {
+                    alpha.animateTo(1f, animationSpec = tween(CARD_ENTRANCE_DURATION, easing = EntranceEasing))
+                }
+                launch {
+                    offsetY.animateTo(0f, animationSpec = tween(CARD_ENTRANCE_DURATION, easing = EntranceEasing))
+                }
+            }
+        }
     }
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed && !isReducedMotion) PRESS_SCALE else 1f,
+        animationSpec = tween(durationMillis = 100),
+        label = "cardScale",
+    )
+
+    val statusText = when {
+        world.isGenerating -> "Generating"
+        world.isFailed -> "Failed"
+        else -> "Completed"
+    }
+    val cardDesc = "${world.title ?: "Untitled Story"}, $statusText"
 
     GlassCard(
         modifier = modifier
-            .alpha(alpha.value)
-            .clickable(onClick = onCardClick),
+            .graphicsLayer {
+                this.alpha = alpha.value
+                translationY = offsetY.value * density
+                scaleX = scale
+                scaleY = scale
+            }
+            .semantics {
+                contentDescription = cardDesc
+                role = Role.Button
+            }
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onCardClick,
+            ),
         cornerRadius = 16.dp,
     ) {
         Column {
@@ -93,7 +149,8 @@ private fun WorldCardImage(world: WorldResponse) {
         if (imageUrl != null) {
             AsyncImage(
                 model = imageUrl,
-                contentDescription = world.worldImageAltText ?: world.title,
+                contentDescription = world.worldImageAltText
+                    ?: "Cover image for ${world.title ?: "story"}",
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(IMAGE_HEIGHT.dp),
@@ -248,13 +305,13 @@ private fun WorldCardActions(world: WorldResponse, onPlayClick: () -> Unit, onDe
     }
 }
 
+private val DateFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("MMM d, yyyy").withZone(ZoneId.systemDefault())
+
 private fun formatDate(isoDate: String): String {
     if (isoDate.isBlank()) return ""
     return try {
-        val instant = Instant.parse(isoDate)
-        val formatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
-            .withZone(ZoneId.systemDefault())
-        formatter.format(instant)
+        DateFormatter.format(Instant.parse(isoDate))
     } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
         Timber.w(e, "Failed to parse date: %s", isoDate)
         isoDate.take(ISO_DATE_PREFIX_LENGTH)

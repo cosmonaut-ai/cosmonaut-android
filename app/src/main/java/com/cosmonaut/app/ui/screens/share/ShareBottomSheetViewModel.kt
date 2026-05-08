@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cosmonaut.app.BuildConfig
 import com.cosmonaut.app.data.remote.dto.InviteTokenResponse
-import com.cosmonaut.app.data.remote.dto.UserInfoResponse
 import com.cosmonaut.app.data.remote.dto.WorldResponse
 import com.cosmonaut.app.data.repository.WorldRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,10 +23,7 @@ private const val AUTOSAVE_DEBOUNCE_MS = 500L
 private const val SAVED_FEEDBACK_MS = 2000L
 private const val MS_PER_HOUR = 3_600_000L
 
-data class SharedUser(
-    val id: String,
-    val displayName: String,
-)
+data class SharedUser(val id: String, val displayName: String,)
 
 data class ShareUiState(
     val isLoading: Boolean = true,
@@ -53,9 +49,7 @@ sealed interface ShareEvent {
 }
 
 @HiltViewModel
-class ShareBottomSheetViewModel @Inject constructor(
-    private val worldRepository: WorldRepository,
-) : ViewModel() {
+class ShareBottomSheetViewModel @Inject constructor(private val worldRepository: WorldRepository,) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ShareUiState())
     val uiState: StateFlow<ShareUiState> = _uiState.asStateFlow()
@@ -212,16 +206,17 @@ class ShareBottomSheetViewModel @Inject constructor(
         return "$baseUrl/worlds/${_uiState.value.worldId}"
     }
 
-    fun getExpiryText(token: InviteTokenResponse): String {
-        return try {
-            val expires = java.time.Instant.parse(token.expiresAt)
-            val now = java.time.Instant.now()
-            val hoursLeft = maxOf(0, (expires.toEpochMilli() - now.toEpochMilli()) / MS_PER_HOUR)
-            if (hoursLeft <= 1L) "Expires in less than an hour"
-            else "Expires in $hoursLeft hours"
-        } catch (e: Exception) {
-            "Expires soon"
+    fun getExpiryText(token: InviteTokenResponse): String = try {
+        val expires = java.time.Instant.parse(token.expiresAt)
+        val now = java.time.Instant.now()
+        val hoursLeft = maxOf(0, (expires.toEpochMilli() - now.toEpochMilli()) / MS_PER_HOUR)
+        if (hoursLeft <= 1L) {
+            "Expires in less than an hour"
+        } else {
+            "Expires in $hoursLeft hours"
         }
+    } catch (e: Exception) {
+        "Expires soon"
     }
 
     private fun hasUnsavedChanges(): Boolean {

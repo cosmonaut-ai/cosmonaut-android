@@ -37,11 +37,7 @@ import java.time.format.FormatStyle
  * Matches the web's SubscriptionSection component.
  */
 @Composable
-fun SubscriptionPlanCard(
-    usage: UsageResponse,
-    regionDetector: RegionDetector,
-    modifier: Modifier = Modifier,
-) {
+fun SubscriptionPlanCard(usage: UsageResponse, regionDetector: RegionDetector, modifier: Modifier = Modifier,) {
     val isFree = usage.tier.uppercase() == "FREE"
 
     Surface(
@@ -90,7 +86,9 @@ fun SubscriptionPlanCard(
                 Spacer(modifier = Modifier.height(4.dp))
                 val periodText = when {
                     usage.pendingCancellation -> "Ends on ${formatDate(usage.cancellationDate)}"
-                    usage.pendingTier != null -> "Changes to ${tierDisplayName(usage.pendingTier)} on ${formatDate(usage.pendingTierDate)}"
+                    usage.pendingTier != null -> "Changes to ${tierDisplayName(
+                        usage.pendingTier
+                    )} on ${formatDate(usage.pendingTierDate)}"
                     isFree -> "Quotas refresh on ${formatDate(usage.periodEnd)}"
                     else -> "Renews on ${formatDate(usage.periodEnd)}"
                 }
@@ -123,10 +121,7 @@ fun SubscriptionPlanCard(
  * Matches the web's Usage card in the SubscriptionSection.
  */
 @Composable
-fun UsageCard(
-    usage: UsageResponse,
-    modifier: Modifier = Modifier,
-) {
+fun UsageCard(usage: UsageResponse, modifier: Modifier = Modifier,) {
     val isFree = usage.tier.uppercase() == "FREE"
     val isExplorer = usage.tier.uppercase() == "EXPLORER"
 

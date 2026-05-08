@@ -22,11 +22,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.outlined.Message
 import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.MapsUgc
 import androidx.compose.material3.DropdownMenu
@@ -310,11 +310,7 @@ private fun FeedbackForm(
 }
 
 @Composable
-private fun CategoryDropdown(
-    selected: FeedbackCategory,
-    onSelect: (FeedbackCategory) -> Unit,
-    enabled: Boolean,
-) {
+private fun CategoryDropdown(selected: FeedbackCategory, onSelect: (FeedbackCategory) -> Unit, enabled: Boolean,) {
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxWidth()) {

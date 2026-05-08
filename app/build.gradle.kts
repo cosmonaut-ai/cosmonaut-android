@@ -159,6 +159,13 @@ dependencies {
     // Play Billing (region detection only — no in-app purchase UI)
     implementation(libs.play.billing)
 
+    // Collections
+    implementation(libs.kotlinx.collections.immutable)
+
     // Logging
     implementation(libs.timber)
+
+    // Performance
+    debugImplementation(libs.leakcanary)
+    implementation(libs.profileinstaller)
 }
