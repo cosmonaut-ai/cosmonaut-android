@@ -335,7 +335,6 @@ private fun StoryContent(
                 CompletedContent(
                     node = uiState.node,
                     isEnding = uiState.isEnding,
-                    isAtNodeQuota = uiState.isAtNodeQuota,
                     isChoiceInProgress = isChoiceInProgress,
                     onChoiceSelected = onChoiceSelected,
                     onCustomChoice = onCustomChoice,
@@ -425,7 +424,6 @@ private fun RemoteGeneratingContent(parentChoice: ChoiceResponse?) {
 private fun CompletedContent(
     node: StoryNodeResponse,
     isEnding: Boolean,
-    isAtNodeQuota: Boolean,
     isChoiceInProgress: Boolean,
     onChoiceSelected: (String) -> Unit,
     onCustomChoice: (String) -> Unit,
@@ -447,7 +445,6 @@ private fun CompletedContent(
         } else {
             ChoiceList(
                 choices = node.choices,
-                isAtQuotaLimit = isAtNodeQuota,
                 isLoading = isChoiceInProgress,
                 onChoiceSelected = onChoiceSelected,
                 onCustomChoice = onCustomChoice,

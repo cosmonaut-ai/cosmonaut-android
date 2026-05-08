@@ -3,6 +3,7 @@ package com.cosmonaut.app.data.remote
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import retrofit2.HttpException
 
 /**
  * Typed API error carrying HTTP status, human-readable detail, and optional error code.
@@ -99,6 +100,16 @@ class ApiError(val status: Int, val detail: String, val code: String? = null,) :
             return ApiError(status, data)
         }
     }
+}
+
+/**
+ * Converts any caught [Exception] to a typed [ApiError] when possible.
+ * Handles both direct [ApiError] instances and Retrofit's [HttpException].
+ */
+fun Exception.asApiError(): ApiError? = when (this) {
+    is ApiError -> this
+    is HttpException -> ApiError.fromResponseBody(code(), response()?.errorBody()?.string())
+    else -> null
 }
 
 @Serializable

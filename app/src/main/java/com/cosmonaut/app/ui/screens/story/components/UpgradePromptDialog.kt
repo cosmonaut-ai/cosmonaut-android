@@ -23,10 +23,19 @@ import com.cosmonaut.app.ui.components.CosmoButtonVariant
 import com.cosmonaut.app.ui.components.SubscriptionCta
 import com.cosmonaut.app.ui.components.SubscriptionCtaAction
 import com.cosmonaut.app.ui.theme.CosmoTheme
+import com.cosmonaut.app.util.formatDate
 
 /**
  * Dialog shown when the user hits a quota limit (worlds, nodes, or audio).
  * Renders a region-aware CTA: clickable link for US users, plain text for non-US.
+ *
+ * Matches the web UpgradePrompt dialog with:
+ * - Title and description
+ * - Usage snippet with counts and reset date
+ * - Footer message about upgrading or waiting
+ * - Manage Subscription CTA for paid users
+ * - View Plans / Upgrade CTA (region-aware)
+ * - Dismiss button
  */
 @Composable
 fun UpgradePromptDialog(
@@ -35,21 +44,33 @@ fun UpgradePromptDialog(
     usage: UsageResponse?,
     onDismiss: () -> Unit,
 ) {
+    val isFreeOrExplorer = usage?.tier?.uppercase().let { it == "FREE" || it == "EXPLORER" }
+    val isFree = usage?.tier?.uppercase() == "FREE"
+    val isPaid = usage?.tier?.uppercase().let { it == "EXPLORER" || it == "COSMONAUT" }
+
     val title = when (resource) {
         "worlds" -> "Story Creation Limit Reached"
         "nodes" -> "Generation Limit Reached"
         "audio" -> "Audio Narration Limit Reached"
         else -> "Usage Limit Reached"
     }
-    val message = when (resource) {
-        "worlds" -> "You've reached your story creation limit for this period."
-        "nodes" -> "You've used all your story nodes for this period."
-        "audio" -> if (usage?.tier?.uppercase() == "FREE" || usage?.tier?.uppercase() == "EXPLORER") {
-            "You've used all your free audio narrations."
+
+    val description = when (resource) {
+        "worlds" -> "You\u2019ve reached your story creation limit for this period."
+        "nodes" -> "You\u2019ve reached your story generation limit for this period."
+        "audio" -> if (isFreeOrExplorer) {
+            "You\u2019ve used all your free audio narrations. Upgrade to generate more."
         } else {
-            "You've reached your audio narration limit for this period."
+            "You\u2019ve reached your audio narration limit for this period."
         }
-        else -> "You've reached your usage limit."
+        else -> "You\u2019ve reached your usage limit."
+    }
+
+    val footerMessage = when {
+        resource == "audio" && isFreeOrExplorer ->
+            "Upgrade your plan to unlock more audio narrations."
+        else ->
+            "Upgrade your plan for higher limits, or wait for your usage period to reset."
     }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -72,7 +93,7 @@ fun UpgradePromptDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = message,
+                    text = description,
                     style = MaterialTheme.typography.bodyMedium,
                     color = CosmoTheme.colors.mutedForeground,
                     textAlign = TextAlign.Center,
@@ -83,7 +104,24 @@ fun UpgradePromptDialog(
                     UsageSnippet(resource = resource, usage = usage)
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = footerMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = CosmoTheme.colors.mutedForeground,
+                    textAlign = TextAlign.Center,
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                if (isPaid) {
+                    SubscriptionCta(
+                        action = SubscriptionCtaAction.MANAGE,
+                        regionDetector = regionDetector,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
 
                 SubscriptionCta(
                     action = SubscriptionCtaAction.UPGRADE,
@@ -105,11 +143,14 @@ fun UpgradePromptDialog(
 @Composable
 private fun UsageSnippet(resource: String, usage: UsageResponse) {
     val (used, limit, label) = when (resource) {
-        "worlds" -> Triple(usage.worldsCreated, usage.worldsLimit, "stories created")
+        "worlds" -> Triple(usage.worldsCreated, usage.worldsLimit, "stories created this period")
         "nodes" -> Triple(usage.nodesUsed, usage.nodesLimit, "generations used")
         "audio" -> Triple(usage.audioUsed, usage.audioLimit, "audio narrations used")
         else -> Triple(0, 0, "used")
     }
+
+    val isFreeOrExplorer = usage.tier.uppercase().let { it == "FREE" || it == "EXPLORER" }
+    val isAudioLifetime = resource == "audio" && isFreeOrExplorer
 
     Surface(
         shape = RoundedCornerShape(8.dp),
@@ -123,12 +164,18 @@ private fun UsageSnippet(resource: String, usage: UsageResponse) {
                 color = CosmoTheme.colors.foreground,
                 fontWeight = FontWeight.Medium,
             )
-            if (resource == "audio" &&
-                (usage.tier.uppercase() == "FREE" || usage.tier.uppercase() == "EXPLORER")
-            ) {
+
+            if (isAudioLifetime) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "One-time allowance — does not reset",
+                    text = "One-time allowance \u2014 does not reset",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = CosmoTheme.colors.mutedForeground,
+                )
+            } else if (usage.periodEnd != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Resets on ${formatDate(usage.periodEnd)}",
                     style = MaterialTheme.typography.labelSmall,
                     color = CosmoTheme.colors.mutedForeground,
                 )

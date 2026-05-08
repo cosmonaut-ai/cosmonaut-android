@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.cosmonaut.app.audio.AudioPlayerManager
 import com.cosmonaut.app.audio.AudioTrackInfo
 import com.cosmonaut.app.data.local.CosmoPreferences
-import com.cosmonaut.app.data.remote.ApiError
+import com.cosmonaut.app.data.remote.asApiError
 import com.cosmonaut.app.data.remote.dto.AudioEntryResponse
 import com.cosmonaut.app.data.remote.dto.VoiceResponse
 import com.cosmonaut.app.data.repository.AudioRepository
@@ -234,14 +234,15 @@ class AudioNarrationViewModel @Inject constructor(
     }
 
     private fun handleGenerationError(error: Exception) {
+        val apiError = error.asApiError()
         when {
-            error is ApiError && error.isRateLimited -> {
+            apiError?.isRateLimited == true -> {
                 playerManager.closePlayer()
                 _events.value = AudioNarrationEvent.RateLimited(
                     "You're generating audio too quickly. Please wait a moment.",
                 )
             }
-            error is ApiError && error.isQuotaExceeded -> {
+            apiError?.isQuotaExceeded == true -> {
                 playerManager.closePlayer()
                 _events.value = AudioNarrationEvent.QuotaExceeded
             }

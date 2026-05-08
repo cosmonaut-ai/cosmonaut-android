@@ -8,6 +8,7 @@ import com.cosmonaut.app.auth.AuthState
 import com.cosmonaut.app.data.billing.RegionDetector
 import com.cosmonaut.app.data.remote.ApiError
 import com.cosmonaut.app.data.remote.StreamEvent
+import com.cosmonaut.app.data.remote.asApiError
 import com.cosmonaut.app.data.remote.dto.ChoiceResponse
 import com.cosmonaut.app.data.remote.dto.StoryNodeResponse
 import com.cosmonaut.app.data.remote.dto.UsageResponse
@@ -39,7 +40,7 @@ sealed interface StoryReaderUiState {
 
     data class RemoteGenerating(val parentChoice: ChoiceResponse?) : StoryReaderUiState
 
-    data class Content(val node: StoryNodeResponse, val isEnding: Boolean, val isAtNodeQuota: Boolean,) :
+    data class Content(val node: StoryNodeResponse, val isEnding: Boolean) :
         StoryReaderUiState
 
     data class Failed(val canRetry: Boolean) : StoryReaderUiState
@@ -94,7 +95,6 @@ class StoryReaderViewModel @Inject constructor(
     private var streamingJob: Job? = null
     private var pollingJob: Job? = null
     private var currentNode: StoryNodeResponse? = null
-    private var isAtNodeQuota = false
 
     init {
         loadNode()
@@ -172,13 +172,11 @@ class StoryReaderViewModel @Inject constructor(
                 _uiState.value = StoryReaderUiState.Content(
                     node = freshParent,
                     isEnding = freshParent.isEnding,
-                    isAtNodeQuota = isAtNodeQuota,
                 )
             } catch (_: Exception) {
                 _uiState.value = StoryReaderUiState.Content(
                     node = parentNode,
                     isEnding = parentNode.isEnding,
-                    isAtNodeQuota = isAtNodeQuota,
                 )
             }
         }
@@ -235,7 +233,6 @@ class StoryReaderViewModel @Inject constructor(
                 _uiState.value = StoryReaderUiState.Content(
                     node = node,
                     isEnding = node.isEnding,
-                    isAtNodeQuota = isAtNodeQuota,
                 )
             }
             node.isFailed -> {
@@ -269,7 +266,6 @@ class StoryReaderViewModel @Inject constructor(
                             _uiState.value = StoryReaderUiState.Content(
                                 node = event.completedNode,
                                 isEnding = event.completedNode.isEnding,
-                                isAtNodeQuota = isAtNodeQuota,
                             )
                         }
                         is StreamEvent.PreGenerated -> {
@@ -277,7 +273,6 @@ class StoryReaderViewModel @Inject constructor(
                             _uiState.value = StoryReaderUiState.Content(
                                 node = event.node,
                                 isEnding = event.node.isEnding,
-                                isAtNodeQuota = isAtNodeQuota,
                             )
                         }
                         is StreamEvent.Error -> {
@@ -329,7 +324,6 @@ class StoryReaderViewModel @Inject constructor(
                     _uiState.value = StoryReaderUiState.Content(
                         node = freshNode,
                         isEnding = freshNode.isEnding,
-                        isAtNodeQuota = isAtNodeQuota,
                     )
                 }
                 else -> {
@@ -351,7 +345,6 @@ class StoryReaderViewModel @Inject constructor(
                 _uiState.value = StoryReaderUiState.Failed(canRetry = true)
             }
             error.isQuotaExceeded -> {
-                isAtNodeQuota = true
                 _events.send(StoryReaderEvent.ShowQuotaPrompt)
             }
             error.isNodeAlreadyProcessed -> {
@@ -391,7 +384,11 @@ class StoryReaderViewModel @Inject constructor(
     }
 
     private suspend fun handleChoiceError(error: Exception) {
-        if (error is ApiError && error.isNodeProcessingConflict) {
+        val apiError = error.asApiError()
+        if (apiError?.isQuotaExceeded == true) {
+            _events.send(StoryReaderEvent.ShowQuotaPrompt)
+            loadNode()
+        } else if (apiError?.isNodeProcessingConflict == true) {
             try {
                 nodeRepository.retryNodeProcessing(worldId, currentNode!!.id)
                 _events.send(
@@ -408,7 +405,7 @@ class StoryReaderViewModel @Inject constructor(
             }
             loadNode()
         } else {
-            val message = if (error is ApiError) error.detail else "Failed to make choice."
+            val message = apiError?.detail ?: "Failed to make choice."
             _events.send(StoryReaderEvent.ShowMessage(message))
             loadNode()
         }
@@ -419,7 +416,6 @@ class StoryReaderViewModel @Inject constructor(
             try {
                 val usage = userRepository.getUsage()
                 _usage.value = usage
-                isAtNodeQuota = usage.nodesUsed >= usage.nodesLimit
             } catch (_: Exception) {
                 Timber.d("Failed to load usage — will default to not at quota")
             }
