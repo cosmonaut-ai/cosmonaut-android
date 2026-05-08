@@ -207,7 +207,8 @@ private fun AuthenticatedShell(pendingDeepLink: MutableStateFlow<DeepLinkData?>)
 
     val showBottomBar = currentDestination?.let { dest ->
         !dest.hasRoute(CosmoRoute.StoryNode::class) &&
-            !dest.hasRoute(CosmoRoute.StoryMap::class)
+            !dest.hasRoute(CosmoRoute.StoryMap::class) &&
+            !dest.hasRoute(CosmoRoute.Feedback::class)
     } ?: true
 
     Scaffold(

@@ -124,6 +124,20 @@ class CosmoPreferences @Inject constructor(private val dataStore: DataStore<Pref
         }
     }
 
+    /**
+     * Clears user-specific data while preserving app-level preferences (theme, carousel state).
+     * Used during sign-out and account deletion.
+     */
+    suspend fun clearUserData() {
+        dataStore.edit { prefs ->
+            val theme = prefs[Keys.THEME_MODE]
+            val carousel = prefs[Keys.CAROUSEL_SEEN]
+            prefs.clear()
+            if (theme != null) prefs[Keys.THEME_MODE] = theme
+            if (carousel != null) prefs[Keys.CAROUSEL_SEEN] = carousel
+        }
+    }
+
     suspend fun clear() {
         dataStore.edit { it.clear() }
     }

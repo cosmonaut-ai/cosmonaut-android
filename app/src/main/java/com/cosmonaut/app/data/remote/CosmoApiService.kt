@@ -2,6 +2,7 @@ package com.cosmonaut.app.data.remote
 
 import com.cosmonaut.app.data.remote.dto.ChooseRequest
 import com.cosmonaut.app.data.remote.dto.CreateWorldRequest
+import com.cosmonaut.app.data.remote.dto.FeedbackRequest
 import com.cosmonaut.app.data.remote.dto.GenerateAudioRequest
 import com.cosmonaut.app.data.remote.dto.GenerateAudioResponse
 import com.cosmonaut.app.data.remote.dto.HealthResponse
@@ -46,6 +47,9 @@ interface CosmoApiService {
 
     @DELETE("auth/account")
     suspend fun deleteAccount()
+
+    @POST("auth/feedback")
+    suspend fun submitFeedback(@Body request: FeedbackRequest)
 
     // ── Worlds ────────────────────────────────────────────────────────
 
