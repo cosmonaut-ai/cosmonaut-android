@@ -18,6 +18,9 @@
         android:theme="@style/Theme.Cosmonaut.Splash"
         android:enableOnBackInvokedCallback="true">
 
+        <!-- Disable Sentry auto-init so we can configure it manually in CosmoApp -->
+        <meta-data android:name="io.sentry.auto-init" android:value="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

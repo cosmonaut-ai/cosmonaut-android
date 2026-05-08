@@ -2,6 +2,8 @@ package com.cosmonaut.app.ui.screens.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cosmonaut.app.analytics.AnalyticsEvent
+import com.cosmonaut.app.analytics.CosmoAnalytics
 import com.cosmonaut.app.data.local.CosmoPreferences
 import com.cosmonaut.app.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -44,6 +46,7 @@ sealed interface OnboardingEvent {
 class OnboardingViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val preferences: CosmoPreferences,
+    private val analytics: CosmoAnalytics,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OnboardingUiState())
@@ -110,6 +113,7 @@ class OnboardingViewModel @Inject constructor(
                 }
 
                 preferences.setOnboardingCompleted(true)
+                analytics.trackEvent(AnalyticsEvent.OnboardingCompleted(newsletterOptIn = state.newsletterOptIn))
                 _events.emit(OnboardingEvent.NavigateToDashboard)
             } catch (@Suppress("TooGenericExceptionCaught") error: Exception) {
                 Timber.w(error, "Onboarding submission failed")

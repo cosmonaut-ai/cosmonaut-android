@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.ktlint) apply false
     alias(libs.plugins.detekt)
+    alias(libs.plugins.sentry.android.gradle) apply false
 }
 
 detekt {

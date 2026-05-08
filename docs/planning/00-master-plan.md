@@ -50,8 +50,7 @@
 | 9   | Settings & Account                     | Account management, preferences, deletion        | Stage 2    |
 | 10  | Polish, Accessibility & Performance    | Animations, a11y audit, performance optimization | All        |
 | 11  | Analytics, Monitoring & Error Tracking | Sentry, PostHog integration                      | Stage 1    |
-| 12  | Testing & Quality Assurance            | Comprehensive test suites                        | All        |
-| 13  | Play Store Preparation & Launch        | Store listing, compliance, release               | All        |
+| 12  | Play Store Preparation & Launch        | Store listing, compliance, release               | All        |
 
 
 ---
@@ -561,56 +560,7 @@ Modify the Explorer tier across the full stack:
 
 ---
 
-## Stage 12: Testing & Quality Assurance
-
-**Goal**: Comprehensive test coverage ensuring stability and correctness before launch.
-
-### Deliverables
-
-- **Unit Tests** (domain + data layers):
-  - Repository logic tests
-  - Use case tests
-  - Data mapper tests
-  - Auth flow unit tests
-  - SSE parser tests
-  - Node ID encoding/decoding tests
-- **ViewModel Tests**:
-  - UI state emission tests with Turbine
-  - Event handling tests
-  - Error state tests
-- **Integration Tests**:
-  - API integration tests (against dev environment or mocked server)
-  - Room database tests
-  - DataStore tests
-- **UI Tests** (Compose):
-  - Screen rendering tests for all major screens
-  - Navigation flow tests
-  - Form validation tests
-  - Choice interaction tests
-- **End-to-End Tests**:
-  - Sign up → onboarding → create world → read story → make choices flow
-  - Auth flow: login → sign out → re-login
-  - Subscription flow: view pricing → checkout (mocked)
-- **Manual QA Checklist**:
-  - Test on physical devices (minimum: 2 phones, 1 tablet)
-  - Test on emulators across API levels (26, 30, 34, 36)
-  - Screen rotation handling
-  - Process death recovery
-  - Network loss/recovery scenarios
-  - Memory pressure behavior
-
-### Exit Criteria
-
-- 80%+ code coverage on domain and data layers
-- All ViewModels have state emission tests
-- Critical user flows have end-to-end tests
-- All screens have basic rendering tests
-- Manual QA passes on target devices
-- No P0/P1 bugs remaining
-
----
-
-## Stage 13: Play Store Preparation & Launch
+## Stage 12: Play Store Preparation & Launch
 
 **Goal**: Prepare all assets, metadata, and compliance requirements. Execute a phased rollout.
 

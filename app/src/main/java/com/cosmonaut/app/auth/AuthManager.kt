@@ -12,6 +12,7 @@ import com.amplifyframework.auth.result.AuthSignUpResult
 import com.amplifyframework.auth.result.step.AuthSignInStep
 import com.amplifyframework.auth.result.step.AuthSignUpStep
 import com.amplifyframework.kotlin.core.Amplify
+import com.cosmonaut.app.analytics.CosmoAnalytics
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +22,9 @@ import timber.log.Timber
 
 @Suppress("TooManyFunctions")
 @Singleton
-class AuthManager @Inject constructor() {
+class AuthManager @Inject constructor(
+    private val analytics: CosmoAnalytics,
+) {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Unknown)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
@@ -58,6 +61,11 @@ class AuthManager @Inject constructor() {
             cachedIdToken = idToken
             val user = extractUserFromIdToken(idToken)
             _authState.value = AuthState.Authenticated(user)
+            analytics.identifyUser(
+                distinctId = user.sub,
+                email = user.email,
+                username = user.username ?: user.name,
+            )
             Timber.i("Auth state refreshed — user: %s", user.email)
         } else {
             clearState()
@@ -155,6 +163,7 @@ class AuthManager @Inject constructor() {
     private fun clearState() {
         cachedIdToken = null
         _authState.value = AuthState.Unauthenticated
+        analytics.resetUser()
     }
 
     /**

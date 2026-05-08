@@ -2,6 +2,8 @@ package com.cosmonaut.app.ui.screens.audio
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cosmonaut.app.analytics.AnalyticsEvent
+import com.cosmonaut.app.analytics.CosmoAnalytics
 import com.cosmonaut.app.audio.AudioPlayerManager
 import com.cosmonaut.app.audio.AudioTrackInfo
 import com.cosmonaut.app.data.local.CosmoPreferences
@@ -50,6 +52,7 @@ class AudioNarrationViewModel @Inject constructor(
     private val audioRepository: AudioRepository,
     private val playerManager: AudioPlayerManager,
     private val preferences: CosmoPreferences,
+    private val analytics: CosmoAnalytics,
 ) : ViewModel() {
 
     private val _voices = MutableStateFlow<List<VoiceResponse>>(emptyList())
@@ -179,7 +182,12 @@ class AudioNarrationViewModel @Inject constructor(
         val voiceId = resolveEffectiveVoiceId() ?: return
         playerManager.ensureServiceStarted()
 
-        // Immediately show the player with track info (generating state)
+        val worldId = currentWorldId
+        val nodeId = currentNodeId
+        if (worldId != null && nodeId != null) {
+            analytics.trackEvent(AnalyticsEvent.NarrationStarted(worldId = worldId, nodeId = nodeId))
+        }
+
         playerManager.showPlayerForTrack(currentNodeTitle)
 
         val existingAudio = nodeAudioCache[voiceId]

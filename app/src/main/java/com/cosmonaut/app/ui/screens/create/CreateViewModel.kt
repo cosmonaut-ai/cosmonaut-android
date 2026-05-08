@@ -2,6 +2,8 @@ package com.cosmonaut.app.ui.screens.create
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cosmonaut.app.analytics.AnalyticsEvent
+import com.cosmonaut.app.analytics.CosmoAnalytics
 import com.cosmonaut.app.data.billing.RegionDetector
 import com.cosmonaut.app.data.local.CosmoPreferences
 import com.cosmonaut.app.data.remote.asApiError
@@ -48,6 +50,7 @@ class CreateViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val preferences: CosmoPreferences,
     private val promptLoader: PromptLoader,
+    private val analytics: CosmoAnalytics,
     val regionDetector: RegionDetector,
 ) : ViewModel() {
 
@@ -94,6 +97,7 @@ class CreateViewModel @Inject constructor(
     fun loadRandomPrompt() {
         val prompt = promptLoader.getRandomPrompt()
         _uiState.update { it.copy(prompt = prompt, promptError = null) }
+        analytics.trackEvent(AnalyticsEvent.RandomPromptUsed)
     }
 
     fun createWorld() {
