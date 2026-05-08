@@ -23,6 +23,7 @@ desugar-jdk = "2.1.5"
 ktlint = "14.2.0"
 detekt = "2.0.0-alpha.3"
 media3 = "1.6.1"
+play-billing = "7.1.1"
 
 [libraries]
 # Compose BOM
@@ -78,6 +79,9 @@ store5 = { module = "org.mobilenativefoundation.store:store5", version.ref = "st
 androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
 androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3" }
 androidx-media3-ui-compose = { group = "androidx.media3", name = "media3-ui-compose", version.ref = "media3" }
+
+# Play Billing (used only for region detection — no in-app purchase flows)
+play-billing = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "play-billing" }
 
 # Logging
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }

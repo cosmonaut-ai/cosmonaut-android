@@ -100,7 +100,7 @@ fun CreateScreen(
             )
 
             if (state.worldsAtLimit) {
-                QuotaWarning()
+                QuotaWarning(regionDetector = viewModel.regionDetector)
             }
 
             GlassCard {
@@ -147,8 +147,11 @@ fun CreateScreen(
 }
 
 @Composable
-private fun QuotaWarning(modifier: Modifier = Modifier) {
-    Box(
+private fun QuotaWarning(
+    modifier: Modifier = Modifier,
+    regionDetector: com.cosmonaut.app.data.billing.RegionDetector? = null,
+) {
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
@@ -165,11 +168,18 @@ private fun QuotaWarning(modifier: Modifier = Modifier) {
             .padding(16.dp),
     ) {
         Text(
-            text = "You\u2019ve reached your world creation limit. " +
-                "Upgrade your plan to create more stories.",
+            text = "You\u2019ve reached your world creation limit.",
             style = MaterialTheme.typography.bodySmall,
             color = CosmoTheme.colors.destructive,
         )
+        if (regionDetector != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            com.cosmonaut.app.ui.components.SubscriptionCta(
+                action = com.cosmonaut.app.ui.components.SubscriptionCtaAction.UPGRADE,
+                regionDetector = regionDetector,
+                compact = true,
+            )
+        }
     }
 }
 

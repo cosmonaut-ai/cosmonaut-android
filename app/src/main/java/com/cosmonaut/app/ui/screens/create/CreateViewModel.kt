@@ -2,6 +2,7 @@ package com.cosmonaut.app.ui.screens.create
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cosmonaut.app.data.billing.RegionDetector
 import com.cosmonaut.app.data.local.CosmoPreferences
 import com.cosmonaut.app.data.remote.dto.CreateWorldRequest
 import com.cosmonaut.app.data.repository.UserRepository
@@ -44,6 +45,7 @@ class CreateViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val preferences: CosmoPreferences,
     private val promptLoader: PromptLoader,
+    val regionDetector: RegionDetector,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateUiState())

@@ -1,5 +1,7 @@
 package com.cosmonaut.app
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -45,7 +47,13 @@ import com.cosmonaut.app.ui.screens.audio.MiniPlayer
 import com.cosmonaut.app.ui.theme.CosmoTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
+
+data class DeepLinkData(val worldId: String, val invite: String? = null)
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -53,6 +61,9 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var authManager: AuthManager
 
     @Inject lateinit var preferences: CosmoPreferences
+
+    private val _pendingDeepLink = MutableStateFlow<DeepLinkData?>(null)
+    val pendingDeepLink: StateFlow<DeepLinkData?> = _pendingDeepLink.asStateFlow()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -64,19 +75,51 @@ class MainActivity : ComponentActivity() {
                 authManager.authState.value is AuthState.Loading
         }
 
+        handleDeepLink(intent)
+
         setContent {
             CosmoTheme {
                 CosmoAppContent(
                     authManager = authManager,
                     preferences = preferences,
+                    pendingDeepLink = _pendingDeepLink,
                 )
             }
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleDeepLink(intent)
+    }
+
+    private fun handleDeepLink(intent: Intent?) {
+        val uri = intent?.data ?: return
+        val deepLink = parseWorldDeepLink(uri) ?: return
+        Timber.d("Deep link received: worldId=${deepLink.worldId}, invite=${deepLink.invite}")
+        _pendingDeepLink.value = deepLink
+    }
+
+    fun consumeDeepLink() {
+        _pendingDeepLink.value = null
+    }
+}
+
+private fun parseWorldDeepLink(uri: Uri): DeepLinkData? {
+    val pathSegments = uri.pathSegments ?: return null
+    if (pathSegments.size < 2 || pathSegments[0] != "worlds") return null
+    val worldId = pathSegments[1]
+    if (worldId.isBlank()) return null
+    val invite = uri.getQueryParameter("invite")
+    return DeepLinkData(worldId = worldId, invite = invite)
 }
 
 @Composable
-private fun CosmoAppContent(authManager: AuthManager, preferences: CosmoPreferences,) {
+private fun CosmoAppContent(
+    authManager: AuthManager,
+    preferences: CosmoPreferences,
+    pendingDeepLink: MutableStateFlow<DeepLinkData?>,
+) {
     val authState by authManager.authState.collectAsState()
     val hasSeenCarousel by preferences.hasSeenCarousel.collectAsState(initial = true)
     val scope = rememberCoroutineScope()
@@ -109,7 +152,7 @@ private fun CosmoAppContent(authManager: AuthManager, preferences: CosmoPreferen
         }
 
         is AuthState.Authenticated -> {
-            AuthenticatedShell()
+            AuthenticatedShell(pendingDeepLink = pendingDeepLink)
         }
     }
 }
@@ -137,11 +180,18 @@ private fun UnauthenticatedShell(startDestination: CosmoRoute, onCarouselSeen: (
 }
 
 @Composable
-private fun AuthenticatedShell() {
+private fun AuthenticatedShell(pendingDeepLink: MutableStateFlow<DeepLinkData?>) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val audioViewModel: AudioNarrationViewModel = hiltViewModel()
+    val deepLink by pendingDeepLink.collectAsState()
+
+    LaunchedEffect(deepLink) {
+        val link = deepLink ?: return@LaunchedEffect
+        navController.navigate(CosmoRoute.WorldHome(link.worldId, link.invite))
+        pendingDeepLink.value = null
+    }
 
     val playbackState by audioViewModel.playbackState.collectAsState()
     val trackInfo by audioViewModel.trackInfo.collectAsState()

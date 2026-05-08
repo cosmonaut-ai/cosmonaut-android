@@ -3,6 +3,8 @@ package com.cosmonaut.app.ui.screens.world
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cosmonaut.app.auth.AuthManager
+import com.cosmonaut.app.auth.AuthState
 import com.cosmonaut.app.data.remote.dto.WorldResponse
 import com.cosmonaut.app.data.repository.WorldRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,9 +41,14 @@ sealed interface WorldHomeEvent {
 class WorldHomeViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val worldRepository: WorldRepository,
+    private val authManager: AuthManager,
 ) : ViewModel() {
 
     private val worldId: String = checkNotNull(savedStateHandle["worldId"])
+    private val invite: String? = savedStateHandle["invite"]
+
+    val currentUserId: String?
+        get() = (authManager.authState.value as? AuthState.Authenticated)?.user?.sub
 
     private val _uiState = MutableStateFlow<WorldHomeUiState>(WorldHomeUiState.Loading)
     val uiState: StateFlow<WorldHomeUiState> = _uiState.asStateFlow()
@@ -59,7 +66,7 @@ class WorldHomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = WorldHomeUiState.Loading
             try {
-                val world = worldRepository.getWorld(worldId)
+                val world = worldRepository.getWorld(worldId, invite)
                 handleWorldState(world)
             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                 Timber.e(e, "Failed to load world $worldId")
@@ -92,6 +99,13 @@ class WorldHomeViewModel @Inject constructor(
 
     fun retryGeneration() {
         loadWorld()
+    }
+
+    fun onWorldUpdated(world: WorldResponse) {
+        val current = _uiState.value
+        if (current is WorldHomeUiState.Ready) {
+            _uiState.value = current.copy(world = world)
+        }
     }
 
     fun deleteWorld() {

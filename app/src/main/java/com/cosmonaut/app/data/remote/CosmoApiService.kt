@@ -5,12 +5,15 @@ import com.cosmonaut.app.data.remote.dto.CreateWorldRequest
 import com.cosmonaut.app.data.remote.dto.GenerateAudioRequest
 import com.cosmonaut.app.data.remote.dto.GenerateAudioResponse
 import com.cosmonaut.app.data.remote.dto.HealthResponse
+import com.cosmonaut.app.data.remote.dto.InviteTokenResponse
 import com.cosmonaut.app.data.remote.dto.NewsletterRequest
 import com.cosmonaut.app.data.remote.dto.PaginatedNodesResponse
 import com.cosmonaut.app.data.remote.dto.PaginatedWorldsResponse
 import com.cosmonaut.app.data.remote.dto.SetUsernameRequest
 import com.cosmonaut.app.data.remote.dto.StoryNodeResponse
+import com.cosmonaut.app.data.remote.dto.UpdateWorldSharingRequest
 import com.cosmonaut.app.data.remote.dto.UsageResponse
+import com.cosmonaut.app.data.remote.dto.UserInfoResponse
 import com.cosmonaut.app.data.remote.dto.UsernameCheckResponse
 import com.cosmonaut.app.data.remote.dto.VoiceResponse
 import com.cosmonaut.app.data.remote.dto.WorldProgressResponse
@@ -60,6 +63,28 @@ interface CosmoApiService {
 
     @GET("worlds/{worldId}/progress")
     suspend fun getWorldProgress(@Path("worldId") worldId: String): WorldProgressResponse
+
+    @POST("worlds/{worldId}/sharing")
+    suspend fun updateWorldSharing(
+        @Path("worldId") worldId: String,
+        @Body request: UpdateWorldSharingRequest,
+    ): WorldResponse
+
+    // ── Invite Tokens ────────────────────────────────────────────────
+
+    @GET("worlds/{worldId}/invite-token")
+    suspend fun getInviteToken(@Path("worldId") worldId: String): InviteTokenResponse?
+
+    @POST("worlds/{worldId}/invite-token")
+    suspend fun createInviteToken(@Path("worldId") worldId: String): InviteTokenResponse
+
+    @DELETE("worlds/{worldId}/invite-token")
+    suspend fun deleteInviteToken(@Path("worldId") worldId: String)
+
+    // ── User Lookup ──────────────────────────────────────────────────
+
+    @GET("auth/users/batch")
+    suspend fun batchLookupUsers(@Query("ids") ids: String): List<UserInfoResponse>
 
     // ── Nodes ──────────────────────────────────────────────────────────
 

@@ -33,7 +33,7 @@ sealed interface CosmoRoute {
     // ── World (will be implemented in Stage 3+) ─────────────────────
 
     @Serializable
-    data class WorldHome(val worldId: String) : CosmoRoute
+    data class WorldHome(val worldId: String, val invite: String? = null) : CosmoRoute
 
     @Serializable
     data class StoryNode(val worldId: String, val nodeId: String) : CosmoRoute

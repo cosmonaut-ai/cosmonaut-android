@@ -46,6 +46,7 @@ android {
             manifestPlaceholders["cognitoRedirectScheme"] = "cosmonaut.dev"
             buildConfigField("String", "API_BASE_URL", "\"https://api.dev.cosmonaut-ai.com\"")
             buildConfigField("String", "STREAMING_BASE_URL", "\"https://streaming.dev.cosmonaut-ai.com\"")
+            buildConfigField("String", "WEB_BASE_URL", "\"https://dev.cosmonaut-ai.com\"")
             buildConfigField("String", "COGNITO_USER_POOL_ID", "\"us-east-2_GWLKBPNKF\"")
             buildConfigField("String", "COGNITO_CLIENT_ID", "\"7bsqjkt7g0notvqm4m5rvdl56g\"")
             buildConfigField("String", "COGNITO_DOMAIN", "\"cosmonaut-dev.auth.us-east-2.amazoncognito.com\"")
@@ -57,6 +58,7 @@ android {
             manifestPlaceholders["cognitoRedirectScheme"] = "cosmonaut"
             buildConfigField("String", "API_BASE_URL", "\"https://api.cosmonaut-ai.com\"")
             buildConfigField("String", "STREAMING_BASE_URL", "\"https://streaming.cosmonaut-ai.com\"")
+            buildConfigField("String", "WEB_BASE_URL", "\"https://cosmonaut-ai.com\"")
             buildConfigField("String", "COGNITO_USER_POOL_ID", "\"us-east-2_NE7ZsAjT9\"")
             buildConfigField("String", "COGNITO_CLIENT_ID", "\"127ioqo9dk9hc4n677t8lf9ft6\"")
             buildConfigField("String", "COGNITO_DOMAIN", "\"cosmonaut-prod.auth.us-east-2.amazoncognito.com\"")
@@ -153,6 +155,9 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.ui.compose)
+
+    // Play Billing (region detection only — no in-app purchase UI)
+    implementation(libs.play.billing)
 
     // Logging
     implementation(libs.timber)
