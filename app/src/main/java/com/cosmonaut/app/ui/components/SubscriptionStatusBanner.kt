@@ -43,11 +43,7 @@ import java.time.format.FormatStyle
  * - Unpaid/failed subscription
  */
 @Composable
-fun SubscriptionStatusBanner(
-    usage: UsageResponse,
-    regionDetector: RegionDetector,
-    modifier: Modifier = Modifier,
-) {
+fun SubscriptionStatusBanner(usage: UsageResponse, regionDetector: RegionDetector, modifier: Modifier = Modifier,) {
     val hasBanner = usage.pendingCancellation ||
         usage.pendingTier != null ||
         usage.subscriptionStatus in listOf("past_due", "paused", "unpaid")
@@ -67,7 +63,10 @@ fun SubscriptionStatusBanner(
                     borderColor = amberColor.copy(alpha = 0.3f),
                 ) {
                     Text(
-                        text = "Your ${tierDisplayName(usage.tier)} plan will end on ${formatDate(usage.cancellationDate)}. " +
+                        text =
+                        "Your ${tierDisplayName(
+                            usage.tier
+                        )} plan will end on ${formatDate(usage.cancellationDate)}. " +
                             "You'll be downgraded to the Free plan after that.",
                         style = MaterialTheme.typography.bodySmall,
                         color = amber200,

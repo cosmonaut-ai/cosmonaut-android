@@ -27,15 +27,14 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.Logout
-import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Feedback
 import androidx.compose.material.icons.outlined.Gavel
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Warning
@@ -62,6 +61,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -76,6 +78,7 @@ import com.cosmonaut.app.auth.AuthState
 import com.cosmonaut.app.data.remote.dto.UsageResponse
 import com.cosmonaut.app.ui.components.CosmoButton
 import com.cosmonaut.app.ui.components.CosmoButtonVariant
+import com.cosmonaut.app.ui.components.CosmoHaptics
 import com.cosmonaut.app.ui.components.SubscriptionPlanCard
 import com.cosmonaut.app.ui.components.UsageCard
 import com.cosmonaut.app.ui.theme.CosmoTheme
@@ -117,6 +120,7 @@ fun SettingsScreen(
             style = MaterialTheme.typography.titleLarge,
             color = CosmoTheme.colors.foreground,
             fontWeight = FontWeight.Bold,
+            modifier = Modifier.semantics { heading() },
         )
         Text(
             text = "Your account, subscription, and preferences",
@@ -240,11 +244,7 @@ fun SettingsScreen(
 // ── Account Section ─────────────────────────────────────────────────
 
 @Composable
-private fun AccountSection(
-    email: String?,
-    username: String?,
-    pictureUrl: String?,
-) {
+private fun AccountSection(email: String?, username: String?, pictureUrl: String?,) {
     SettingsCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -338,11 +338,9 @@ private fun AccountSection(
 // ── Email Preferences ───────────────────────────────────────────────
 
 @Composable
-private fun EmailPreferencesSection(
-    usage: UsageResponse?,
-    isUpdating: Boolean,
-    onToggle: (Boolean) -> Unit,
-) {
+private fun EmailPreferencesSection(usage: UsageResponse?, isUpdating: Boolean, onToggle: (Boolean) -> Unit,) {
+    val view = LocalView.current
+
     SettingsCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -385,7 +383,10 @@ private fun EmailPreferencesSection(
 
             Switch(
                 checked = usage?.newsletterOptedIn ?: false,
-                onCheckedChange = { onToggle(it) },
+                onCheckedChange = {
+                    CosmoHaptics.onToggle(view)
+                    onToggle(it)
+                },
                 enabled = usage != null && !isUpdating,
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = CosmoTheme.colors.primaryForeground,
@@ -402,11 +403,7 @@ private fun EmailPreferencesSection(
 // ── Support & Info ──────────────────────────────────────────────────
 
 @Composable
-private fun SupportSection(
-    onNavigateToFeedback: () -> Unit,
-    onOpenTerms: () -> Unit,
-    onOpenPrivacy: () -> Unit,
-) {
+private fun SupportSection(onNavigateToFeedback: () -> Unit, onOpenTerms: () -> Unit, onOpenPrivacy: () -> Unit,) {
     SettingsCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -450,12 +447,7 @@ private fun SupportSection(
 }
 
 @Composable
-private fun SettingsListItem(
-    icon: ImageVector,
-    label: String,
-    trailingIcon: ImageVector,
-    onClick: () -> Unit,
-) {
+private fun SettingsListItem(icon: ImageVector, label: String, trailingIcon: ImageVector, onClick: () -> Unit,) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -538,7 +530,10 @@ private fun DangerZoneSection(viewModel: SettingsViewModel) {
                         fontWeight = FontWeight.Medium,
                     )
                     Text(
-                        text = "Permanently delete your account and all data. Your stories will be permanently deleted, even if other users have saved them. This cannot be undone.",
+                        text = "Permanently delete your account and all data. " +
+                            "Your stories will be permanently deleted, " +
+                            "even if other users have saved them. " +
+                            "This cannot be undone.",
                         style = MaterialTheme.typography.bodySmall,
                         color = CosmoTheme.colors.mutedForeground,
                     )
@@ -566,10 +561,7 @@ private fun DangerZoneSection(viewModel: SettingsViewModel) {
 }
 
 @Composable
-private fun DeleteAccountDialog(
-    viewModel: SettingsViewModel,
-    onDismiss: () -> Unit,
-) {
+private fun DeleteAccountDialog(viewModel: SettingsViewModel, onDismiss: () -> Unit,) {
     val isDeletingAccount by viewModel.isDeletingAccount.collectAsState()
     val deleteError by viewModel.deleteError.collectAsState()
     var confirmText by remember { mutableStateOf("") }
@@ -602,7 +594,10 @@ private fun DeleteAccountDialog(
             }
 
             Text(
-                text = "This will permanently delete your account and all your stories, even if other users have saved them. Any active subscriptions will be cancelled. This action cannot be undone.",
+                text = "This will permanently delete your account " +
+                    "and all your stories, even if other users " +
+                    "have saved them. Any active subscriptions " +
+                    "will be cancelled. This action cannot be undone.",
                 style = MaterialTheme.typography.bodySmall,
                 color = CosmoTheme.colors.mutedForeground,
             )
@@ -696,10 +691,7 @@ private fun DeleteAccountDialog(
 // ── Shared Components ───────────────────────────────────────────────
 
 @Composable
-private fun SettingsCard(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
+private fun SettingsCard(modifier: Modifier = Modifier, content: @Composable () -> Unit,) {
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = CosmoTheme.colors.card,

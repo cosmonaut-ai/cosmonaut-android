@@ -27,9 +27,7 @@ import timber.log.Timber
  * restrictive behavior.
  */
 @Singleton
-class RegionDetector @Inject constructor(
-    @ApplicationContext private val context: Context,
-) {
+class RegionDetector @Inject constructor(@ApplicationContext private val context: Context,) {
     private val _isUsUser = MutableStateFlow<Boolean?>(null)
     val isUsUser: StateFlow<Boolean?> = _isUsUser.asStateFlow()
 

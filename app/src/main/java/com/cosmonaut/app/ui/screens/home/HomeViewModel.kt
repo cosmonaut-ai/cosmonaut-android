@@ -10,6 +10,9 @@ import com.cosmonaut.app.data.repository.UserRepository
 import com.cosmonaut.app.data.repository.WorldRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +23,8 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 data class HomeUiState(
-    val worlds: List<WorldResponse> = emptyList(),
+    val worlds: ImmutableList<WorldResponse> = persistentListOf(),
+    val featuredWorlds: ImmutableList<WorldResponse> = persistentListOf(),
     val isLoading: Boolean = true,
     val isLoadingMore: Boolean = false,
     val isRefreshing: Boolean = false,
@@ -53,6 +57,7 @@ class HomeViewModel @Inject constructor(
 
     init {
         loadWorlds()
+        loadFeaturedWorlds()
         checkUsageLimits()
         viewModelScope.launch { regionDetector.detect() }
     }
@@ -64,7 +69,7 @@ class HomeViewModel @Inject constructor(
                 val response = worldRepository.getWorlds()
                 _uiState.update {
                     it.copy(
-                        worlds = response.items,
+                        worlds = response.items.toImmutableList(),
                         isLoading = false,
                         nextCursor = response.nextCursor,
                         hasMore = response.nextCursor != null,
@@ -82,6 +87,17 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private fun loadFeaturedWorlds() {
+        viewModelScope.launch {
+            try {
+                val featured = worldRepository.getFeaturedWorlds()
+                _uiState.update { it.copy(featuredWorlds = featured.toImmutableList()) }
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                Timber.e(e, "Failed to load featured worlds")
+            }
+        }
+    }
+
     fun loadMore() {
         val cursor = _uiState.value.nextCursor ?: return
         if (_uiState.value.isLoadingMore) return
@@ -92,7 +108,7 @@ class HomeViewModel @Inject constructor(
                 val response = worldRepository.getWorlds(cursor)
                 _uiState.update {
                     it.copy(
-                        worlds = it.worlds + response.items,
+                        worlds = (it.worlds + response.items).toImmutableList(),
                         isLoadingMore = false,
                         nextCursor = response.nextCursor,
                         hasMore = response.nextCursor != null,
@@ -112,7 +128,7 @@ class HomeViewModel @Inject constructor(
                 val response = worldRepository.getWorlds()
                 _uiState.update {
                     it.copy(
-                        worlds = response.items,
+                        worlds = response.items.toImmutableList(),
                         isRefreshing = false,
                         nextCursor = response.nextCursor,
                         hasMore = response.nextCursor != null,
@@ -120,6 +136,7 @@ class HomeViewModel @Inject constructor(
                     )
                 }
                 checkUsageLimits()
+                loadFeaturedWorlds()
             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                 Timber.e(e, "Failed to refresh worlds")
                 _uiState.update { it.copy(isRefreshing = false) }
@@ -167,7 +184,7 @@ class HomeViewModel @Inject constructor(
             try {
                 worldRepository.deleteWorld(world.id)
                 _uiState.update { state ->
-                    state.copy(worlds = state.worlds.filter { it.id != world.id })
+                    state.copy(worlds = state.worlds.filter { it.id != world.id }.toImmutableList())
                 }
                 _events.send(HomeEvent.ShowMessage("\"${world.title ?: "Story"}\" deleted"))
                 checkUsageLimits()

@@ -28,6 +28,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -37,6 +39,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.cosmonaut.app.ui.components.CosmoEmptyState
 import com.cosmonaut.app.ui.components.CosmoErrorState
 import com.cosmonaut.app.ui.components.DeleteConfirmationDialog
+import com.cosmonaut.app.ui.components.FeaturedWorldsCarousel
 import com.cosmonaut.app.ui.components.SubscriptionStatusBanner
 import com.cosmonaut.app.ui.components.WorldCard
 import com.cosmonaut.app.ui.components.WorldCardSkeleton
@@ -115,6 +118,7 @@ fun HomeScreen(
                         onPlayClick = viewModel::onPlayClick,
                         onDeleteClick = viewModel::requestDelete,
                         onLoadMore = viewModel::loadMore,
+                        onNavigateToWorld = onNavigateToWorld,
                         regionDetector = viewModel.regionDetector,
                     )
                 }
@@ -149,7 +153,9 @@ private fun SectionHeader(modifier: Modifier = Modifier) {
         style = MaterialTheme.typography.titleLarge,
         color = CosmoTheme.colors.foreground,
         fontWeight = FontWeight.Bold,
-        modifier = modifier.padding(vertical = 8.dp),
+        modifier = modifier
+            .padding(vertical = 8.dp)
+            .semantics { heading() },
     )
 }
 
@@ -160,6 +166,7 @@ private fun WorldList(
     onPlayClick: (com.cosmonaut.app.data.remote.dto.WorldResponse) -> Unit,
     onDeleteClick: (com.cosmonaut.app.data.remote.dto.WorldResponse) -> Unit,
     onLoadMore: () -> Unit,
+    onNavigateToWorld: (String) -> Unit,
     regionDetector: com.cosmonaut.app.data.billing.RegionDetector? = null,
 ) {
     val listState = rememberLazyListState()
@@ -181,7 +188,7 @@ private fun WorldList(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (state.usage != null && regionDetector != null) {
-            item(key = "subscription_banner") {
+            item(key = "subscription_banner", contentType = "banner") {
                 SubscriptionStatusBanner(
                     usage = state.usage,
                     regionDetector = regionDetector,
@@ -189,13 +196,24 @@ private fun WorldList(
             }
         }
 
-        item {
+        if (state.featuredWorlds.isNotEmpty()) {
+            item(key = "featured_carousel", contentType = "featured") {
+                FeaturedWorldsCarousel(
+                    worlds = state.featuredWorlds,
+                    onWorldClick = onNavigateToWorld,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            }
+        }
+
+        item(key = "section_header", contentType = "header") {
             SectionHeader()
         }
 
         itemsIndexed(
             items = state.worlds,
             key = { _, world -> world.id },
+            contentType = { _, _ -> "world_card" },
         ) { index, world ->
             WorldCard(
                 world = world,
@@ -207,7 +225,7 @@ private fun WorldList(
         }
 
         if (state.isLoadingMore) {
-            item {
+            item(key = "loading_more", contentType = "loading") {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -223,7 +241,7 @@ private fun WorldList(
             }
         }
 
-        item {
+        item(key = "bottom_spacer", contentType = "spacer") {
             Spacer(modifier = Modifier.height(8.dp))
         }
     }

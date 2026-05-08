@@ -3,6 +3,7 @@ package com.cosmonaut.app.navigation
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -28,8 +29,13 @@ import com.cosmonaut.app.ui.screens.settings.SettingsScreen
 import com.cosmonaut.app.ui.screens.story.StoryReaderScreen
 import com.cosmonaut.app.ui.screens.storymap.StoryMapScreen
 import com.cosmonaut.app.ui.screens.world.WorldHomeScreen
+import com.cosmonaut.app.ui.theme.CosmoMotion
 
-private const val TRANSITION_DURATION_MS = 300
+private const val TRANSITION_DURATION_MS = 350
+private const val FADE_DURATION_MS = 200
+
+private val EmphasizedDecelerate = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
+private val EmphasizedAccelerate = CubicBezierEasing(0.3f, 0.0f, 0.8f, 0.15f)
 
 private fun NavBackStackEntry.bottomNavIndex(): Int {
     BottomNavItem.entries.forEachIndexed { index, item ->
@@ -48,37 +54,44 @@ fun CosmoNavHost(
     audioViewModel: AudioNarrationViewModel? = null,
 ) {
     var storyNodeDirection by remember { mutableStateOf(StoryNodeDirection.FORWARD) }
+    val isReducedMotion = CosmoMotion.config.isReducedMotion
+    val duration = if (isReducedMotion) 0 else TRANSITION_DURATION_MS
+    val fadeDuration = if (isReducedMotion) 0 else FADE_DURATION_MS
 
     NavHost(
         navController = navController,
         startDestination = startDestination,
         modifier = modifier,
         enterTransition = {
-            fadeIn(animationSpec = tween(TRANSITION_DURATION_MS)) +
+            fadeIn(animationSpec = tween(fadeDuration)) +
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = tween(TRANSITION_DURATION_MS),
+                    animationSpec = tween(duration, easing = EmphasizedDecelerate),
+                    initialOffset = { it / 4 },
                 )
         },
         exitTransition = {
-            fadeOut(animationSpec = tween(TRANSITION_DURATION_MS)) +
+            fadeOut(animationSpec = tween(fadeDuration)) +
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = tween(TRANSITION_DURATION_MS),
+                    animationSpec = tween(duration, easing = EmphasizedAccelerate),
+                    targetOffset = { it / 4 },
                 )
         },
         popEnterTransition = {
-            fadeIn(animationSpec = tween(TRANSITION_DURATION_MS)) +
+            fadeIn(animationSpec = tween(fadeDuration)) +
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = tween(TRANSITION_DURATION_MS),
+                    animationSpec = tween(duration, easing = EmphasizedDecelerate),
+                    initialOffset = { it / 4 },
                 )
         },
         popExitTransition = {
-            fadeOut(animationSpec = tween(TRANSITION_DURATION_MS)) +
+            fadeOut(animationSpec = tween(fadeDuration)) +
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = tween(TRANSITION_DURATION_MS),
+                    animationSpec = tween(duration, easing = EmphasizedAccelerate),
+                    targetOffset = { it / 4 },
                 )
         },
     ) {
@@ -189,8 +202,12 @@ fun CosmoNavHost(
                 } else {
                     AnimatedContentTransitionScope.SlideDirection.Start
                 }
-                fadeIn(tween(TRANSITION_DURATION_MS)) +
-                    slideIntoContainer(direction, tween(TRANSITION_DURATION_MS))
+                fadeIn(tween(fadeDuration)) +
+                    slideIntoContainer(
+                        direction,
+                        tween(duration, easing = EmphasizedDecelerate),
+                        initialOffset = { it / 4 },
+                    )
             },
             exitTransition = {
                 val direction = if (storyNodeDirection == StoryNodeDirection.BACKWARD) {
@@ -198,8 +215,12 @@ fun CosmoNavHost(
                 } else {
                     AnimatedContentTransitionScope.SlideDirection.Start
                 }
-                fadeOut(tween(TRANSITION_DURATION_MS)) +
-                    slideOutOfContainer(direction, tween(TRANSITION_DURATION_MS))
+                fadeOut(tween(fadeDuration)) +
+                    slideOutOfContainer(
+                        direction,
+                        tween(duration, easing = EmphasizedAccelerate),
+                        targetOffset = { it / 4 },
+                    )
             },
         ) {
             StoryReaderScreen(
@@ -244,25 +265,31 @@ fun CosmoNavHost(
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.bottomNavEnter(): EnterTransition {
     val fromIndex = initialState.bottomNavIndex()
     val toIndex = targetState.bottomNavIndex()
-    if (fromIndex < 0 || toIndex < 0) return fadeIn(tween(TRANSITION_DURATION_MS))
+    if (fromIndex < 0 || toIndex < 0) return fadeIn(tween(FADE_DURATION_MS))
     val direction = if (toIndex > fromIndex) {
         AnimatedContentTransitionScope.SlideDirection.Start
     } else {
         AnimatedContentTransitionScope.SlideDirection.End
     }
-    return slideIntoContainer(direction, tween(TRANSITION_DURATION_MS)) +
-        fadeIn(tween(TRANSITION_DURATION_MS))
+    return slideIntoContainer(
+        direction,
+        tween(TRANSITION_DURATION_MS, easing = EmphasizedDecelerate),
+        initialOffset = { it / 5 },
+    ) + fadeIn(tween(FADE_DURATION_MS))
 }
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.bottomNavExit(): ExitTransition {
     val fromIndex = initialState.bottomNavIndex()
     val toIndex = targetState.bottomNavIndex()
-    if (fromIndex < 0 || toIndex < 0) return fadeOut(tween(TRANSITION_DURATION_MS))
+    if (fromIndex < 0 || toIndex < 0) return fadeOut(tween(FADE_DURATION_MS))
     val direction = if (toIndex > fromIndex) {
         AnimatedContentTransitionScope.SlideDirection.Start
     } else {
         AnimatedContentTransitionScope.SlideDirection.End
     }
-    return slideOutOfContainer(direction, tween(TRANSITION_DURATION_MS)) +
-        fadeOut(tween(TRANSITION_DURATION_MS))
+    return slideOutOfContainer(
+        direction,
+        tween(TRANSITION_DURATION_MS, easing = EmphasizedAccelerate),
+        targetOffset = { it / 5 },
+    ) + fadeOut(tween(FADE_DURATION_MS))
 }

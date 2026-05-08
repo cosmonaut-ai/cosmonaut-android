@@ -44,6 +44,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -83,6 +87,7 @@ fun ChoiceList(
                 fontWeight = FontWeight.Medium,
             ),
             color = CosmoTheme.colors.mutedForeground,
+            modifier = Modifier.semantics { heading() },
         )
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -157,6 +162,14 @@ private fun ChoiceCard(
         else -> 1f
     }
 
+    val choiceDesc = buildString {
+        append("Choice ${index + 1}: ${choice.label}")
+        if (isExplored) append(", already explored")
+        if (isPreGenerated) append(", quick choice")
+        if (isCustom) append(", custom choice")
+        if (isDisabled && isAtQuotaLimit) append(", quota limit reached")
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -164,6 +177,10 @@ private fun ChoiceCard(
             .clip(RoundedCornerShape(12.dp))
             .border(1.dp, borderColor, RoundedCornerShape(12.dp))
             .background(bgColor)
+            .semantics(mergeDescendants = true) {
+                contentDescription = choiceDesc
+                if (isExplored) stateDescription = "Already explored"
+            }
             .clickable(enabled = !isDisabled) { onClick() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,

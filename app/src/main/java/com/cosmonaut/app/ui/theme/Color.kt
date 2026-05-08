@@ -1,5 +1,6 @@
 package com.cosmonaut.app.ui.theme
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
 /**
@@ -77,6 +78,7 @@ object CosmoColors {
  * Holds the full set of semantic colors for the Cosmonaut design system.
  * Parallels the web CSS custom property structure.
  */
+@Immutable
 data class CosmoColorScheme(
     val background: Color,
     val foreground: Color,

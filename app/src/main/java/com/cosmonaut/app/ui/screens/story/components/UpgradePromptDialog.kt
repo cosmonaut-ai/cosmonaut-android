@@ -136,4 +136,3 @@ private fun UsageSnippet(resource: String, usage: UsageResponse) {
         }
     }
 }
-

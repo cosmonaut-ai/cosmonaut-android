@@ -20,9 +20,7 @@ enum class FeedbackCategory(val label: String) {
 }
 
 @HiltViewModel
-class FeedbackViewModel @Inject constructor(
-    private val userRepository: UserRepository,
-) : ViewModel() {
+class FeedbackViewModel @Inject constructor(private val userRepository: UserRepository,) : ViewModel() {
 
     private val _category = MutableStateFlow(FeedbackCategory.FEEDBACK)
     val category: StateFlow<FeedbackCategory> = _category.asStateFlow()

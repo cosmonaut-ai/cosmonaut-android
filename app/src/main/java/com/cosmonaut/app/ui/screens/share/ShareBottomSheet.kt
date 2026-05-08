@@ -57,9 +57,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.cosmonaut.app.data.remote.dto.InviteTokenResponse
 import com.cosmonaut.app.data.remote.dto.WorldResponse
-import androidx.compose.ui.window.Dialog
 import com.cosmonaut.app.ui.components.CosmoButton
 import com.cosmonaut.app.ui.components.CosmoButtonVariant
 import com.cosmonaut.app.ui.components.CosmoIconButton
@@ -140,11 +140,7 @@ fun ShareBottomSheet(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ShareBottomSheetContent(
-    state: ShareUiState,
-    viewModel: ShareBottomSheetViewModel,
-    context: Context,
-) {
+private fun ShareBottomSheetContent(state: ShareUiState, viewModel: ShareBottomSheetViewModel, context: Context,) {
     Column(
         modifier = Modifier
             .fillMaxWidth()

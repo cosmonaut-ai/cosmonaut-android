@@ -43,6 +43,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
@@ -52,13 +54,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.cosmonaut.app.data.remote.dto.ChoiceResponse
 import com.cosmonaut.app.data.remote.dto.StoryNodeResponse
 import com.cosmonaut.app.ui.screens.audio.AudioNarrationViewModel
+import com.cosmonaut.app.ui.screens.share.ShareBottomSheet
+import com.cosmonaut.app.ui.screens.share.ShareBottomSheetViewModel
 import com.cosmonaut.app.ui.screens.story.components.ChoiceList
 import com.cosmonaut.app.ui.screens.story.components.EndingCard
 import com.cosmonaut.app.ui.screens.story.components.NodeFailedCard
 import com.cosmonaut.app.ui.screens.story.components.StoryText
 import com.cosmonaut.app.ui.screens.story.components.TypewriterText
-import com.cosmonaut.app.ui.screens.share.ShareBottomSheet
-import com.cosmonaut.app.ui.screens.share.ShareBottomSheetViewModel
 import com.cosmonaut.app.ui.screens.story.components.UpgradePromptDialog
 import com.cosmonaut.app.ui.screens.story.components.WrongSessionCard
 import com.cosmonaut.app.ui.theme.CosmoTheme
@@ -255,10 +257,19 @@ private fun StoryTopBar(
             IconButton(
                 onClick = onAudio,
                 enabled = audioEnabled,
+                modifier = Modifier.semantics {
+                    if (!audioEnabled && audioDisabledMessage != null) {
+                        stateDescription = audioDisabledMessage
+                    }
+                },
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.VolumeUp,
-                    contentDescription = audioDisabledMessage ?: "Audio narration",
+                    contentDescription = if (audioEnabled) {
+                        "Toggle audio narration"
+                    } else {
+                        "Audio narration unavailable: ${audioDisabledMessage ?: "disabled"}"
+                    },
                     tint = if (audioEnabled) {
                         CosmoTheme.colors.foreground
                     } else {
@@ -468,7 +479,8 @@ private fun ParentChoiceBanner(parentChoice: ChoiceResponse?) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
             .background(CosmoTheme.colors.card)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp)
+            .semantics(mergeDescendants = true) { },
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowForward,

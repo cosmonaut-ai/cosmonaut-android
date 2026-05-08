@@ -72,6 +72,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -87,6 +89,7 @@ import com.cosmonaut.app.ui.components.CosmoBadge
 import com.cosmonaut.app.ui.components.CosmoButton
 import com.cosmonaut.app.ui.components.CosmoButtonVariant
 import com.cosmonaut.app.ui.components.CosmoErrorState
+import com.cosmonaut.app.ui.components.CosmoHaptics
 import com.cosmonaut.app.ui.components.GlassCard
 import com.cosmonaut.app.ui.screens.share.ShareBottomSheet
 import com.cosmonaut.app.ui.screens.share.ShareBottomSheetViewModel
@@ -417,6 +420,7 @@ private fun HeroSection(world: WorldResponse) {
                 style = MaterialTheme.typography.headlineMedium,
                 color = CosmoTheme.colors.foreground,
                 fontWeight = FontWeight.Bold,
+                modifier = Modifier.semantics { heading() },
             )
 
             if (world.description != null) {
@@ -481,7 +485,12 @@ private fun StatsStrip(world: WorldResponse) {
 // ── Actions ─────────────────────────────────────────────────────────────
 
 @Composable
-private fun ActionRow(hasProgress: Boolean, onContinue: () -> Unit, onViewMap: () -> Unit = {}, onShare: () -> Unit = {}) {
+private fun ActionRow(
+    hasProgress: Boolean,
+    onContinue: () -> Unit,
+    onViewMap: () -> Unit = {},
+    onShare: () -> Unit = {}
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -550,6 +559,7 @@ private fun ActionRow(hasProgress: Boolean, onContinue: () -> Unit, onViewMap: (
 @Composable
 private fun OriginPromptCard(prompt: String) {
     val context = LocalContext.current
+    val view = androidx.compose.ui.platform.LocalView.current
     var copied by remember { mutableStateOf(false) }
 
     LaunchedEffect(copied) {
@@ -595,6 +605,7 @@ private fun OriginPromptCard(prompt: String) {
                             cm.setPrimaryClip(
                                 ClipData.newPlainText("prompt", prompt),
                             )
+                            CosmoHaptics.onConfirm(view)
                             copied = true
                         }
                         .padding(horizontal = 8.dp, vertical = 4.dp),
@@ -603,7 +614,7 @@ private fun OriginPromptCard(prompt: String) {
                 ) {
                     Icon(
                         imageVector = copyIcon,
-                        contentDescription = "Copy prompt",
+                        contentDescription = if (copied) "Copied to clipboard" else "Copy prompt",
                         tint = copyTint,
                         modifier = Modifier.size(14.dp),
                     )
@@ -628,7 +639,11 @@ private fun CharactersCarousel(characters: List<CharacterResponse>) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         contentPadding = PaddingValues(end = 16.dp),
     ) {
-        itemsIndexed(characters) { _, character ->
+        itemsIndexed(
+            characters,
+            key = { _, c -> c.name ?: "" },
+            contentType = { _, _ -> "character_card" },
+        ) { _, character ->
             val name = character.name ?: return@itemsIndexed
             GlassCard(cornerRadius = 12.dp) {
                 Column(
@@ -691,7 +706,11 @@ private fun LocationsCarousel(locations: List<LocationResponse>) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         contentPadding = PaddingValues(end = 16.dp),
     ) {
-        itemsIndexed(locations) { _, location ->
+        itemsIndexed(
+            locations,
+            key = { _, l -> l.name ?: "" },
+            contentType = { _, _ -> "location_card" },
+        ) { _, location ->
             val name = location.name ?: return@itemsIndexed
             GlassCard(cornerRadius = 12.dp) {
                 Column(
@@ -751,7 +770,11 @@ private fun EndingsCarousel(endings: List<String>) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         contentPadding = PaddingValues(end = 16.dp),
     ) {
-        itemsIndexed(endings) { index, ending ->
+        itemsIndexed(
+            endings,
+            key = { index, _ -> "ending_$index" },
+            contentType = { _, _ -> "spoiler_card" },
+        ) { index, ending ->
             SpoilerCard(ending = ending, index = index + 1)
         }
     }
@@ -895,13 +918,13 @@ private fun SectionHeader(icon: ImageVector, title: String) {
     }
 }
 
+private val DateFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("MMM d, yyyy").withZone(ZoneId.systemDefault())
+
 private fun formatDate(isoDate: String): String {
     if (isoDate.isBlank()) return ""
     return try {
-        val instant = Instant.parse(isoDate)
-        val formatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
-            .withZone(ZoneId.systemDefault())
-        formatter.format(instant)
+        DateFormatter.format(Instant.parse(isoDate))
     } catch (_: Exception) {
         isoDate.take(DATE_FALLBACK_LENGTH)
     }
