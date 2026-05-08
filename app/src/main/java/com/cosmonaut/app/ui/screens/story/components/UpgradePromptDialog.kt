@@ -10,12 +10,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.cosmonaut.app.analytics.AnalyticsEvent
+import com.cosmonaut.app.analytics.CosmoAnalytics
 import com.cosmonaut.app.data.billing.RegionDetector
 import com.cosmonaut.app.data.remote.dto.UsageResponse
 import com.cosmonaut.app.ui.components.CosmoButton
@@ -42,8 +45,12 @@ fun UpgradePromptDialog(
     resource: String,
     regionDetector: RegionDetector,
     usage: UsageResponse?,
+    analytics: CosmoAnalytics? = null,
     onDismiss: () -> Unit,
 ) {
+    LaunchedEffect(Unit) {
+        analytics?.trackEvent(AnalyticsEvent.UpgradePromptShown(resource = resource))
+    }
     val isFreeOrExplorer = usage?.tier?.uppercase().let { it == "FREE" || it == "EXPLORER" }
     val isFree = usage?.tier?.uppercase() == "FREE"
     val isPaid = usage?.tier?.uppercase().let { it == "EXPLORER" || it == "COSMONAUT" }

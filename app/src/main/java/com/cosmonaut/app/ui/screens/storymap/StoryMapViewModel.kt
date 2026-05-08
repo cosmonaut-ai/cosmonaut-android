@@ -3,6 +3,8 @@ package com.cosmonaut.app.ui.screens.storymap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cosmonaut.app.analytics.AnalyticsEvent
+import com.cosmonaut.app.analytics.CosmoAnalytics
 import com.cosmonaut.app.data.repository.NodeRepository
 import com.cosmonaut.app.data.repository.WorldRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,6 +27,7 @@ class StoryMapViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val nodeRepository: NodeRepository,
     private val worldRepository: WorldRepository,
+    private val analytics: CosmoAnalytics,
 ) : ViewModel() {
 
     val worldId: String = checkNotNull(savedStateHandle["worldId"])
@@ -41,6 +44,7 @@ class StoryMapViewModel @Inject constructor(
     val uiState: StateFlow<StoryMapUiState> = _uiState.asStateFlow()
 
     init {
+        analytics.trackEvent(AnalyticsEvent.MapViewed(worldId = worldId))
         loadNodes()
     }
 

@@ -3,6 +3,8 @@ package com.cosmonaut.app.ui.screens.share
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cosmonaut.app.BuildConfig
+import com.cosmonaut.app.analytics.AnalyticsEvent
+import com.cosmonaut.app.analytics.CosmoAnalytics
 import com.cosmonaut.app.data.remote.dto.InviteTokenResponse
 import com.cosmonaut.app.data.remote.dto.WorldResponse
 import com.cosmonaut.app.data.repository.WorldRepository
@@ -49,7 +51,10 @@ sealed interface ShareEvent {
 }
 
 @HiltViewModel
-class ShareBottomSheetViewModel @Inject constructor(private val worldRepository: WorldRepository,) : ViewModel() {
+class ShareBottomSheetViewModel @Inject constructor(
+    private val worldRepository: WorldRepository,
+    private val analytics: CosmoAnalytics,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ShareUiState())
     val uiState: StateFlow<ShareUiState> = _uiState.asStateFlow()
@@ -206,6 +211,10 @@ class ShareBottomSheetViewModel @Inject constructor(private val worldRepository:
         return "$baseUrl/worlds/${_uiState.value.worldId}"
     }
 
+    fun trackLinkCopied() {
+        analytics.trackEvent(AnalyticsEvent.ShareLinkCopied)
+    }
+
     fun getExpiryText(token: InviteTokenResponse): String = try {
         val expires = java.time.Instant.parse(token.expiresAt)
         val now = java.time.Instant.now()
@@ -248,6 +257,13 @@ class ShareBottomSheetViewModel @Inject constructor(private val worldRepository:
                 )
                 originalVisibility = updated.visibility ?: "private"
                 originalSharedWith = updated.sharedWith ?: emptyList()
+
+                analytics.trackEvent(
+                    AnalyticsEvent.WorldShared(
+                        visibility = state.visibility,
+                        sharedCount = state.sharedUsers.size,
+                    ),
+                )
 
                 _uiState.update { it.copy(isSaving = false) }
                 markSaved()

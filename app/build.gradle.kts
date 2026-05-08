@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.sentry.android.gradle)
 }
 
 ktlint {
@@ -52,6 +53,9 @@ android {
             buildConfigField("String", "COGNITO_DOMAIN", "\"cosmonaut-dev.auth.us-east-2.amazoncognito.com\"")
             buildConfigField("String", "COGNITO_REDIRECT_URI", "\"cosmonaut.dev://callback\"")
             buildConfigField("String", "AWS_REGION", "\"us-east-2\"")
+            buildConfigField("String", "SENTRY_DSN", "\"https://a737601da6d420d0745431649af5b18d@o4511032796905472.ingest.us.sentry.io/4511032822792192\"")
+            buildConfigField("String", "POSTHOG_API_KEY", "\"REDACTED_PUBLIC_POSTHOG_TOKEN\"")
+            buildConfigField("String", "POSTHOG_HOST", "\"REDACTED_PUBLIC_POSTHOG_HOST\"")
         }
         create("prod") {
             dimension = "environment"
@@ -64,6 +68,9 @@ android {
             buildConfigField("String", "COGNITO_DOMAIN", "\"cosmonaut-prod.auth.us-east-2.amazoncognito.com\"")
             buildConfigField("String", "COGNITO_REDIRECT_URI", "\"cosmonaut://callback\"")
             buildConfigField("String", "AWS_REGION", "\"us-east-2\"")
+            buildConfigField("String", "SENTRY_DSN", "\"https://a737601da6d420d0745431649af5b18d@o4511032796905472.ingest.us.sentry.io/4511032822792192\"")
+            buildConfigField("String", "POSTHOG_API_KEY", "\"REDACTED_PUBLIC_POSTHOG_TOKEN\"")
+            buildConfigField("String", "POSTHOG_HOST", "\"REDACTED_PUBLIC_POSTHOG_HOST\"")
         }
     }
 
@@ -168,4 +175,36 @@ dependencies {
     // Performance
     debugImplementation(libs.leakcanary)
     implementation(libs.profileinstaller)
+
+    // Sentry (crash reporting, performance monitoring, session replay)
+    implementation(platform(libs.sentry.bom))
+    implementation(libs.sentry.android)
+    implementation(libs.sentry.compose.android)
+    implementation(libs.sentry.okhttp)
+    implementation(libs.sentry.android.timber)
+    implementation(libs.sentry.android.navigation)
+    implementation(libs.sentry.kotlin.extensions)
+
+    // PostHog (product analytics)
+    implementation(libs.posthog.android)
+}
+
+sentry {
+    org = "cosmonaut"
+    projectName = "cosmonaut-android"
+    authToken = System.getenv("SENTRY_AUTH_TOKEN")
+
+    tracingInstrumentation {
+        enabled = true
+        features = setOf(
+            io.sentry.android.gradle.extensions.InstrumentationFeature.FILE_IO,
+            io.sentry.android.gradle.extensions.InstrumentationFeature.OKHTTP,
+            io.sentry.android.gradle.extensions.InstrumentationFeature.COMPOSE,
+        )
+    }
+
+    autoUploadProguardMapping =
+        System.getenv("SENTRY_AUTH_TOKEN") != null
+    includeSourceContext =
+        System.getenv("SENTRY_AUTH_TOKEN") != null
 }

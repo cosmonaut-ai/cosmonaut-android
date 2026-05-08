@@ -37,3 +37,12 @@
 
 # Coil
 -dontwarn coil3.**
+
+# Sentry
+-keep class io.sentry.** { *; }
+-dontwarn io.sentry.**
+-keepattributes LineNumberTable,SourceFile
+
+# PostHog
+-keep class com.posthog.** { *; }
+-dontwarn com.posthog.**

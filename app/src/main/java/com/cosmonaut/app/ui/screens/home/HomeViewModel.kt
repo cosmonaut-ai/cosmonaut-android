@@ -2,6 +2,8 @@ package com.cosmonaut.app.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cosmonaut.app.analytics.AnalyticsEvent
+import com.cosmonaut.app.analytics.CosmoAnalytics
 import com.cosmonaut.app.data.billing.RegionDetector
 import com.cosmonaut.app.data.remote.dto.UsageResponse
 import com.cosmonaut.app.data.remote.dto.WorldProgressResponse
@@ -47,6 +49,7 @@ sealed interface HomeEvent {
 class HomeViewModel @Inject constructor(
     private val worldRepository: WorldRepository,
     private val userRepository: UserRepository,
+    private val analytics: CosmoAnalytics,
     val regionDetector: RegionDetector,
 ) : ViewModel() {
 
@@ -222,6 +225,10 @@ class HomeViewModel @Inject constructor(
                 Timber.e(e, "Failed to refresh usage")
             }
         }
+    }
+
+    fun trackFeaturedWorldClick(worldId: String) {
+        analytics.trackEvent(AnalyticsEvent.FeaturedWorldClicked(worldId = worldId))
     }
 
     private fun checkUsageLimits() {

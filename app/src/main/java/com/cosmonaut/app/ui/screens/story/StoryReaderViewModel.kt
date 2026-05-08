@@ -3,6 +3,8 @@ package com.cosmonaut.app.ui.screens.story
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cosmonaut.app.analytics.AnalyticsEvent
+import com.cosmonaut.app.analytics.CosmoAnalytics
 import com.cosmonaut.app.auth.AuthManager
 import com.cosmonaut.app.auth.AuthState
 import com.cosmonaut.app.data.billing.RegionDetector
@@ -65,6 +67,7 @@ class StoryReaderViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val worldRepository: WorldRepository,
     private val authManager: AuthManager,
+    private val analytics: CosmoAnalytics,
     val regionDetector: RegionDetector,
 ) : ViewModel() {
 
@@ -111,6 +114,11 @@ class StoryReaderViewModel @Inject constructor(
         if (_isChoiceInProgress.value) return
         _isChoiceInProgress.value = true
 
+        if (node.parentId == null) {
+            analytics.trackEvent(AnalyticsEvent.StoryStarted(worldId = worldId))
+        }
+        analytics.trackEvent(AnalyticsEvent.StoryChoiceMade(worldId = worldId, choiceType = "preset"))
+
         viewModelScope.launch {
             try {
                 val newNode = nodeRepository.chooseOption(
@@ -138,6 +146,8 @@ class StoryReaderViewModel @Inject constructor(
         if (text.isBlank()) return
         if (_isChoiceInProgress.value) return
         _isChoiceInProgress.value = true
+
+        analytics.trackEvent(AnalyticsEvent.StoryChoiceMade(worldId = worldId, choiceType = "custom"))
 
         viewModelScope.launch {
             try {
@@ -230,6 +240,11 @@ class StoryReaderViewModel @Inject constructor(
             node.isInitialized -> startStreaming(node)
             node.isGenerating -> startPolling(node)
             node.isCompleted -> {
+                if (node.isEnding) {
+                    analytics.trackEvent(
+                        AnalyticsEvent.StoryEnded(worldId = worldId, pathLength = computePathLength(node.id)),
+                    )
+                }
                 _uiState.value = StoryReaderUiState.Content(
                     node = node,
                     isEnding = node.isEnding,
@@ -239,6 +254,23 @@ class StoryReaderViewModel @Inject constructor(
                 _uiState.value = StoryReaderUiState.Failed(canRetry = true)
             }
         }
+    }
+
+    private fun computePathLength(nodeId: String): Int {
+        if (nodeId == "0") return 0
+        var depth = 0
+        var remaining = nodeId.removePrefix("0")
+        while (remaining.isNotEmpty()) {
+            depth++
+            val firstChar = remaining[0]
+            if (firstChar.isDigit()) {
+                val prefixLen = firstChar.digitToInt()
+                remaining = remaining.drop(1 + prefixLen)
+            } else {
+                remaining = remaining.drop(1)
+            }
+        }
+        return depth
     }
 
     private fun startStreaming(node: StoryNodeResponse) {

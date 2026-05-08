@@ -27,6 +27,9 @@ play-billing = "7.1.1"
 leakcanary = "2.14"
 profileinstaller = "1.4.1"
 kotlinx-collections-immutable = "0.3.8"
+sentry = "8.40.0"
+sentry-gradle-plugin = "6.6.0"
+posthog = "3.39.2"
 
 [libraries]
 # Compose BOM
@@ -96,6 +99,18 @@ timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "tim
 leakcanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "leakcanary" }
 profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 
+# Sentry (BOM for version alignment)
+sentry-bom = { group = "io.sentry", name = "sentry-bom", version.ref = "sentry" }
+sentry-android = { group = "io.sentry", name = "sentry-android" }
+sentry-compose-android = { group = "io.sentry", name = "sentry-compose-android" }
+sentry-okhttp = { group = "io.sentry", name = "sentry-okhttp" }
+sentry-android-timber = { group = "io.sentry", name = "sentry-android-timber" }
+sentry-android-navigation = { group = "io.sentry", name = "sentry-android-navigation" }
+sentry-kotlin-extensions = { group = "io.sentry", name = "sentry-kotlin-extensions" }
+
+# PostHog
+posthog-android = { group = "com.posthog", name = "posthog-android", version.ref = "posthog" }
+
 # Desugaring
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar-jdk" }
 
@@ -107,3 +122,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
+sentry-android-gradle = { id = "io.sentry.android.gradle", version.ref = "sentry-gradle-plugin" }

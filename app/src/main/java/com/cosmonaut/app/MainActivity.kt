@@ -35,6 +35,8 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.cosmonaut.app.analytics.CosmoAnalytics
+import com.cosmonaut.app.analytics.TrackScreenViews
 import com.cosmonaut.app.auth.AuthManager
 import com.cosmonaut.app.auth.AuthState
 import com.cosmonaut.app.data.local.CosmoPreferences
@@ -62,6 +64,8 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var preferences: CosmoPreferences
 
+    @Inject lateinit var analytics: CosmoAnalytics
+
     private val _pendingDeepLink = MutableStateFlow<DeepLinkData?>(null)
     val pendingDeepLink: StateFlow<DeepLinkData?> = _pendingDeepLink.asStateFlow()
 
@@ -83,6 +87,7 @@ class MainActivity : ComponentActivity() {
                     authManager = authManager,
                     preferences = preferences,
                     pendingDeepLink = _pendingDeepLink,
+                    analytics = analytics,
                 )
             }
         }
@@ -119,6 +124,7 @@ private fun CosmoAppContent(
     authManager: AuthManager,
     preferences: CosmoPreferences,
     pendingDeepLink: MutableStateFlow<DeepLinkData?>,
+    analytics: CosmoAnalytics,
 ) {
     val authState by authManager.authState.collectAsState()
     val hasSeenCarousel by preferences.hasSeenCarousel.collectAsState(initial = true)
@@ -152,7 +158,7 @@ private fun CosmoAppContent(
         }
 
         is AuthState.Authenticated -> {
-            AuthenticatedShell(pendingDeepLink = pendingDeepLink)
+            AuthenticatedShell(pendingDeepLink = pendingDeepLink, analytics = analytics)
         }
     }
 }
@@ -180,8 +186,9 @@ private fun UnauthenticatedShell(startDestination: CosmoRoute, onCarouselSeen: (
 }
 
 @Composable
-private fun AuthenticatedShell(pendingDeepLink: MutableStateFlow<DeepLinkData?>) {
+private fun AuthenticatedShell(pendingDeepLink: MutableStateFlow<DeepLinkData?>, analytics: CosmoAnalytics) {
     val navController = rememberNavController()
+    TrackScreenViews(navController = navController, analytics = analytics)
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val audioViewModel: AudioNarrationViewModel = hiltViewModel()

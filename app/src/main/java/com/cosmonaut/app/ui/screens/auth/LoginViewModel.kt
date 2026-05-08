@@ -3,6 +3,8 @@ package com.cosmonaut.app.ui.screens.auth
 import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cosmonaut.app.analytics.AnalyticsEvent
+import com.cosmonaut.app.analytics.CosmoAnalytics
 import com.cosmonaut.app.auth.AuthError
 import com.cosmonaut.app.auth.AuthManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -41,7 +43,10 @@ data class LoginUiState(
 )
 
 @HiltViewModel
-class LoginViewModel @Inject constructor(private val authManager: AuthManager,) : ViewModel() {
+class LoginViewModel @Inject constructor(
+    private val authManager: AuthManager,
+    private val analytics: CosmoAnalytics,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
@@ -91,6 +96,7 @@ class LoginViewModel @Inject constructor(private val authManager: AuthManager,) 
         launchAuth {
             val result = authManager.signInWithEmail(state.email, state.password)
             if (result.isSignedIn) {
+                analytics.trackEvent(AnalyticsEvent.Login(method = "email"))
                 _events.emit(LoginEvent.NavigateToDashboard)
             } else if (authManager.needsSignUpConfirmation(result)) {
                 _uiState.update {
@@ -110,6 +116,7 @@ class LoginViewModel @Inject constructor(private val authManager: AuthManager,) 
         if (state.email.isBlank() || state.password.isBlank()) return
         launchAuth {
             val result = authManager.signUpWithEmail(state.email, state.password)
+            analytics.trackEvent(AnalyticsEvent.SignUp(method = "email"))
             if (authManager.needsSignUpConfirmation(result)) {
                 _uiState.update {
                     it.copy(
@@ -120,6 +127,7 @@ class LoginViewModel @Inject constructor(private val authManager: AuthManager,) 
             } else if (result.isSignUpComplete) {
                 val signInResult = authManager.signInWithEmail(state.email, state.password)
                 if (signInResult.isSignedIn) {
+                    analytics.trackEvent(AnalyticsEvent.Login(method = "email"))
                     _events.emit(LoginEvent.NavigateToDashboard)
                 }
             }
@@ -132,8 +140,10 @@ class LoginViewModel @Inject constructor(private val authManager: AuthManager,) 
         val state = _uiState.value
         launchAuth {
             authManager.confirmSignUp(state.email, state.verificationCode)
+            analytics.trackEvent(AnalyticsEvent.EmailVerified)
             val signInResult = authManager.signInWithEmail(state.email, state.password)
             if (signInResult.isSignedIn) {
+                analytics.trackEvent(AnalyticsEvent.Login(method = "email"))
                 _events.emit(LoginEvent.NavigateToDashboard)
             }
         }
@@ -168,6 +178,7 @@ class LoginViewModel @Inject constructor(private val authManager: AuthManager,) 
         val state = _uiState.value
         launchAuth {
             authManager.confirmResetPassword(state.email, state.newPassword, state.resetCode)
+            analytics.trackEvent(AnalyticsEvent.PasswordReset)
             _uiState.update {
                 it.copy(
                     view = LoginView.SIGN_IN,
@@ -184,6 +195,7 @@ class LoginViewModel @Inject constructor(private val authManager: AuthManager,) 
     // ── Google Sign In ────────────────────────────────────────────────
 
     fun signInWithGoogle(activity: Activity) {
+        analytics.trackEvent(AnalyticsEvent.Login(method = "google"))
         launchAuth {
             val result = authManager.signInWithGoogle(activity)
             if (result.isSignedIn) {
@@ -201,6 +213,13 @@ class LoginViewModel @Inject constructor(private val authManager: AuthManager,) 
                 block()
             } catch (@Suppress("TooGenericExceptionCaught") error: Exception) {
                 Timber.w(error, "Auth operation failed")
+                val currentView = _uiState.value.view
+                val action = when (currentView) {
+                    LoginView.SIGN_IN -> "sign_in"
+                    LoginView.SIGN_UP -> "sign_up"
+                    else -> "auth"
+                }
+                analytics.trackEvent(AnalyticsEvent.AuthFailed(method = "email", action = action))
                 if (AuthError.isAccountSuspended(error)) {
                     _uiState.update { it.copy(isSuspended = true) }
                 } else {
