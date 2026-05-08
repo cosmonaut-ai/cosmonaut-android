@@ -57,6 +57,8 @@ import com.cosmonaut.app.ui.screens.story.components.EndingCard
 import com.cosmonaut.app.ui.screens.story.components.NodeFailedCard
 import com.cosmonaut.app.ui.screens.story.components.StoryText
 import com.cosmonaut.app.ui.screens.story.components.TypewriterText
+import com.cosmonaut.app.ui.screens.share.ShareBottomSheet
+import com.cosmonaut.app.ui.screens.share.ShareBottomSheetViewModel
 import com.cosmonaut.app.ui.screens.story.components.UpgradePromptDialog
 import com.cosmonaut.app.ui.screens.story.components.WrongSessionCard
 import com.cosmonaut.app.ui.theme.CosmoTheme
@@ -77,6 +79,9 @@ fun StoryReaderScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showQuotaPrompt by remember { mutableStateOf(false) }
     var showAudioQuotaPrompt by remember { mutableStateOf(false) }
+    var showShareSheet by remember { mutableStateOf(false) }
+    val shareViewModel: ShareBottomSheetViewModel = hiltViewModel()
+    val worldForShare by viewModel.worldForShare.collectAsState()
 
     // Update audio ViewModel with current node context
     LaunchedEffect(uiState) {
@@ -133,18 +138,22 @@ fun StoryReaderScreen(
         }
     }
 
+    val usage by viewModel.usage.collectAsState()
+
     if (showQuotaPrompt) {
         UpgradePromptDialog(
             resource = "nodes",
-            onViewPlans = { showQuotaPrompt = false },
+            regionDetector = viewModel.regionDetector,
+            usage = usage,
             onDismiss = { showQuotaPrompt = false },
         )
     }
 
     if (showAudioQuotaPrompt) {
         UpgradePromptDialog(
-            resource = "audio narrations",
-            onViewPlans = { showAudioQuotaPrompt = false },
+            resource = "audio",
+            regionDetector = viewModel.regionDetector,
+            usage = usage,
             onDismiss = { showAudioQuotaPrompt = false },
         )
     }
@@ -164,6 +173,10 @@ fun StoryReaderScreen(
                 onAudio = { audioViewModel?.toggleNarration() },
                 audioEnabled = isAudioEnabled,
                 audioDisabledMessage = audioDisabledMessage,
+                onShare = {
+                    viewModel.loadWorldForShare()
+                    showShareSheet = true
+                },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -184,6 +197,15 @@ fun StoryReaderScreen(
             modifier = Modifier.padding(innerPadding),
         )
     }
+
+    if (showShareSheet && worldForShare != null) {
+        ShareBottomSheet(
+            world = worldForShare!!,
+            currentUserId = viewModel.currentUserId,
+            viewModel = shareViewModel,
+            onDismiss = { showShareSheet = false },
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -196,6 +218,7 @@ private fun StoryTopBar(
     onAudio: () -> Unit,
     audioEnabled: Boolean,
     audioDisabledMessage: String?,
+    onShare: () -> Unit = {},
 ) {
     TopAppBar(
         title = { },
@@ -243,11 +266,11 @@ private fun StoryTopBar(
                     },
                 )
             }
-            IconButton(onClick = { }, enabled = false) {
+            IconButton(onClick = onShare) {
                 Icon(
                     imageVector = Icons.Outlined.Share,
                     contentDescription = "Share",
-                    tint = CosmoTheme.colors.mutedForeground.copy(alpha = 0.5f),
+                    tint = CosmoTheme.colors.mutedForeground,
                 )
             }
         },

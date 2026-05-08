@@ -31,9 +31,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import com.cosmonaut.app.ui.components.CosmoEmptyState
 import com.cosmonaut.app.ui.components.CosmoErrorState
 import com.cosmonaut.app.ui.components.DeleteConfirmationDialog
+import com.cosmonaut.app.ui.components.SubscriptionStatusBanner
 import com.cosmonaut.app.ui.components.WorldCard
 import com.cosmonaut.app.ui.components.WorldCardSkeleton
 import com.cosmonaut.app.ui.theme.CosmoTheme
@@ -63,6 +67,13 @@ fun HomeScreen(
                     duration = SnackbarDuration.Short,
                 )
             }
+        }
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            viewModel.refreshUsage()
         }
     }
 
@@ -104,6 +115,7 @@ fun HomeScreen(
                         onPlayClick = viewModel::onPlayClick,
                         onDeleteClick = viewModel::requestDelete,
                         onLoadMore = viewModel::loadMore,
+                        regionDetector = viewModel.regionDetector,
                     )
                 }
             }
@@ -148,6 +160,7 @@ private fun WorldList(
     onPlayClick: (com.cosmonaut.app.data.remote.dto.WorldResponse) -> Unit,
     onDeleteClick: (com.cosmonaut.app.data.remote.dto.WorldResponse) -> Unit,
     onLoadMore: () -> Unit,
+    regionDetector: com.cosmonaut.app.data.billing.RegionDetector? = null,
 ) {
     val listState = rememberLazyListState()
     val shouldLoadMore by remember {
@@ -167,6 +180,15 @@ private fun WorldList(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        if (state.usage != null && regionDetector != null) {
+            item(key = "subscription_banner") {
+                SubscriptionStatusBanner(
+                    usage = state.usage,
+                    regionDetector = regionDetector,
+                )
+            }
+        }
+
         item {
             SectionHeader()
         }

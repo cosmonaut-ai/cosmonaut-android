@@ -30,8 +30,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +68,7 @@ private data class ButtonColors(
     val content: Color,
     val ripple: Color,
     val border: Color?,
+    val useShadowDepth: Boolean = false,
 )
 
 @Composable
@@ -87,6 +95,7 @@ private fun resolveColors(variant: CosmoButtonVariant): ButtonColors {
             content = colors.outlineForeground,
             ripple = colors.outlineForeground,
             border = colors.outlineBorder,
+            useShadowDepth = true,
         )
         CosmoButtonVariant.Destructive -> ButtonColors(
             face = colors.destructive,
@@ -144,13 +153,44 @@ fun CosmoButton(
 
     val shape = RoundedCornerShape(BUTTON_CORNER)
     val depthHeight = if (isGhost) 0.dp else DEPTH_SIZE
+    val useShadow = buttonColors.useShadowDepth
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(BUTTON_HEIGHT + depthHeight),
+            .height(BUTTON_HEIGHT + depthHeight)
+            .then(
+                if (!isGhost && useShadow) {
+                    Modifier
+                        .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+                        .drawWithContent {
+                            val cornerPx = BUTTON_CORNER.toPx()
+                            val depthSizePx = DEPTH_SIZE.toPx()
+                            val buttonHeightPx = size.height - depthSizePx
+                            val translateYPx = translateY.toPx()
+
+                            drawRoundRect(
+                                color = currentDepth,
+                                topLeft = Offset(0f, depthSizePx),
+                                size = Size(size.width, buttonHeightPx),
+                                cornerRadius = CornerRadius(cornerPx, cornerPx),
+                            )
+                            drawRoundRect(
+                                color = Color.Black,
+                                topLeft = Offset(0f, translateYPx),
+                                size = Size(size.width, buttonHeightPx),
+                                cornerRadius = CornerRadius(cornerPx, cornerPx),
+                                blendMode = BlendMode.DstOut,
+                            )
+
+                            drawContent()
+                        }
+                } else {
+                    Modifier
+                },
+            ),
     ) {
-        if (!isGhost) {
+        if (!isGhost && !useShadow) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

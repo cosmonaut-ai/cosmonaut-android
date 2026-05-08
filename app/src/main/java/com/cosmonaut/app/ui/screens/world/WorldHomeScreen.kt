@@ -1,4 +1,5 @@
 @file:Suppress("MatchingDeclarationName", "TooManyFunctions")
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
 package com.cosmonaut.app.ui.screens.world
 
@@ -87,6 +88,8 @@ import com.cosmonaut.app.ui.components.CosmoButton
 import com.cosmonaut.app.ui.components.CosmoButtonVariant
 import com.cosmonaut.app.ui.components.CosmoErrorState
 import com.cosmonaut.app.ui.components.GlassCard
+import com.cosmonaut.app.ui.screens.share.ShareBottomSheet
+import com.cosmonaut.app.ui.screens.share.ShareBottomSheetViewModel
 import com.cosmonaut.app.ui.theme.CosmoTheme
 import java.time.Instant
 import java.time.ZoneId
@@ -115,6 +118,8 @@ fun WorldHomeScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showShareSheet by remember { mutableStateOf(false) }
+    val shareViewModel: ShareBottomSheetViewModel = hiltViewModel()
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -151,12 +156,26 @@ fun WorldHomeScreen(
                 onContinue = viewModel::onContinueStory,
                 onBack = onNavigateBack,
                 onViewMap = { onNavigateToMap(currentState.world.id) },
+                onShare = { showShareSheet = true },
             )
         }
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
+    }
+
+    if (showShareSheet) {
+        val world = (state as? WorldHomeUiState.Ready)?.world
+        if (world != null) {
+            ShareBottomSheet(
+                world = world,
+                currentUserId = viewModel.currentUserId,
+                viewModel = shareViewModel,
+                onDismiss = { showShareSheet = false },
+                onWorldUpdate = viewModel::onWorldUpdated,
+            )
+        }
     }
 }
 
@@ -254,6 +273,7 @@ private fun ReadyState(
     onContinue: () -> Unit,
     onBack: () -> Unit,
     onViewMap: () -> Unit = {},
+    onShare: () -> Unit = {},
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -271,6 +291,7 @@ private fun ReadyState(
                     hasProgress = currentNodeId != null,
                     onContinue = onContinue,
                     onViewMap = onViewMap,
+                    onShare = onShare,
                 )
                 if (world.worldPrompt != null) {
                     OriginPromptCard(prompt = world.worldPrompt)
@@ -460,7 +481,7 @@ private fun StatsStrip(world: WorldResponse) {
 // ── Actions ─────────────────────────────────────────────────────────────
 
 @Composable
-private fun ActionRow(hasProgress: Boolean, onContinue: () -> Unit, onViewMap: () -> Unit = {}) {
+private fun ActionRow(hasProgress: Boolean, onContinue: () -> Unit, onViewMap: () -> Unit = {}, onShare: () -> Unit = {}) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -505,7 +526,7 @@ private fun ActionRow(hasProgress: Boolean, onContinue: () -> Unit, onViewMap: (
         }
 
         CosmoButton(
-            onClick = { /* Stage 7 */ },
+            onClick = onShare,
             variant = CosmoButtonVariant.Ghost,
             modifier = Modifier.weight(0.6f),
         ) {

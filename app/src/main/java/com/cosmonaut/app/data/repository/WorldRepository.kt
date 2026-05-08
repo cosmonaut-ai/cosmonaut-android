@@ -2,7 +2,10 @@ package com.cosmonaut.app.data.repository
 
 import com.cosmonaut.app.data.remote.CosmoApiService
 import com.cosmonaut.app.data.remote.dto.CreateWorldRequest
+import com.cosmonaut.app.data.remote.dto.InviteTokenResponse
 import com.cosmonaut.app.data.remote.dto.PaginatedWorldsResponse
+import com.cosmonaut.app.data.remote.dto.UpdateWorldSharingRequest
+import com.cosmonaut.app.data.remote.dto.UserInfoResponse
 import com.cosmonaut.app.data.remote.dto.WorldProgressResponse
 import com.cosmonaut.app.data.remote.dto.WorldResponse
 import com.cosmonaut.app.data.store.WorldDetailStore
@@ -86,5 +89,39 @@ class WorldRepository @Inject constructor(
 
     suspend fun invalidateProgress(worldId: String) {
         progressStore.clear(WorldProgressKey(worldId))
+    }
+
+    // ── Sharing ──────────────────────────────────────────────────────
+
+    suspend fun updateWorldSharing(
+        worldId: String,
+        visibility: String? = null,
+        sharedWith: List<String>? = null,
+    ): WorldResponse {
+        val request = UpdateWorldSharingRequest(
+            visibility = visibility,
+            sharedWith = sharedWith,
+        )
+        val updated = apiService.updateWorldSharing(worldId, request)
+        worldStore.clear(WorldKey(worldId))
+        invalidateWorldList()
+        return updated
+    }
+
+    suspend fun getInviteToken(worldId: String): InviteTokenResponse? = try {
+        apiService.getInviteToken(worldId)
+    } catch (_: kotlinx.serialization.SerializationException) {
+        null
+    }
+
+    suspend fun createInviteToken(worldId: String): InviteTokenResponse =
+        apiService.createInviteToken(worldId)
+
+    suspend fun deleteInviteToken(worldId: String) =
+        apiService.deleteInviteToken(worldId)
+
+    suspend fun batchLookupUsers(ids: List<String>): List<UserInfoResponse> {
+        if (ids.isEmpty()) return emptyList()
+        return apiService.batchLookupUsers(ids.joinToString(","))
     }
 }

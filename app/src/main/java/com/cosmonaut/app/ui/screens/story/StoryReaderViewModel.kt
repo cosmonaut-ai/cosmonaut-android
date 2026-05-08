@@ -3,12 +3,18 @@ package com.cosmonaut.app.ui.screens.story
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cosmonaut.app.auth.AuthManager
+import com.cosmonaut.app.auth.AuthState
+import com.cosmonaut.app.data.billing.RegionDetector
 import com.cosmonaut.app.data.remote.ApiError
 import com.cosmonaut.app.data.remote.StreamEvent
 import com.cosmonaut.app.data.remote.dto.ChoiceResponse
 import com.cosmonaut.app.data.remote.dto.StoryNodeResponse
+import com.cosmonaut.app.data.remote.dto.UsageResponse
+import com.cosmonaut.app.data.remote.dto.WorldResponse
 import com.cosmonaut.app.data.repository.NodeRepository
 import com.cosmonaut.app.data.repository.UserRepository
+import com.cosmonaut.app.data.repository.WorldRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
@@ -56,10 +62,22 @@ class StoryReaderViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val nodeRepository: NodeRepository,
     private val userRepository: UserRepository,
+    private val worldRepository: WorldRepository,
+    private val authManager: AuthManager,
+    val regionDetector: RegionDetector,
 ) : ViewModel() {
 
     val worldId: String = checkNotNull(savedStateHandle["worldId"])
     val nodeId: String = checkNotNull(savedStateHandle["nodeId"])
+
+    val currentUserId: String?
+        get() = (authManager.authState.value as? AuthState.Authenticated)?.user?.sub
+
+    private val _worldForShare = MutableStateFlow<WorldResponse?>(null)
+    val worldForShare: StateFlow<WorldResponse?> = _worldForShare.asStateFlow()
+
+    private val _usage = MutableStateFlow<UsageResponse?>(null)
+    val usage: StateFlow<UsageResponse?> = _usage.asStateFlow()
 
     private val _uiState = MutableStateFlow<StoryReaderUiState>(StoryReaderUiState.Loading)
     val uiState: StateFlow<StoryReaderUiState> = _uiState.asStateFlow()
@@ -179,6 +197,17 @@ class StoryReaderViewModel @Inject constructor(
         cancelStreaming()
         cancelPolling()
         viewModelScope.launch { _events.send(StoryReaderEvent.NavigateToDashboard) }
+    }
+
+    fun loadWorldForShare() {
+        viewModelScope.launch {
+            try {
+                _worldForShare.value = worldRepository.getWorld(worldId)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to load world for share")
+                _events.send(StoryReaderEvent.ShowMessage("Failed to load sharing info"))
+            }
+        }
     }
 
     private fun loadNode() {
@@ -389,6 +418,7 @@ class StoryReaderViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val usage = userRepository.getUsage()
+                _usage.value = usage
                 isAtNodeQuota = usage.nodesUsed >= usage.nodesLimit
             } catch (_: Exception) {
                 Timber.d("Failed to load usage — will default to not at quota")

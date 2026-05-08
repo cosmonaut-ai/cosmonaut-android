@@ -2,6 +2,8 @@ package com.cosmonaut.app.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cosmonaut.app.data.billing.RegionDetector
+import com.cosmonaut.app.data.remote.dto.UsageResponse
 import com.cosmonaut.app.data.remote.dto.WorldProgressResponse
 import com.cosmonaut.app.data.remote.dto.WorldResponse
 import com.cosmonaut.app.data.repository.UserRepository
@@ -27,6 +29,7 @@ data class HomeUiState(
     val hasMore: Boolean = true,
     val worldToDelete: WorldResponse? = null,
     val worldsAtLimit: Boolean = false,
+    val usage: UsageResponse? = null,
 )
 
 sealed interface HomeEvent {
@@ -39,6 +42,7 @@ sealed interface HomeEvent {
 class HomeViewModel @Inject constructor(
     private val worldRepository: WorldRepository,
     private val userRepository: UserRepository,
+    val regionDetector: RegionDetector,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -50,6 +54,7 @@ class HomeViewModel @Inject constructor(
     init {
         loadWorlds()
         checkUsageLimits()
+        viewModelScope.launch { regionDetector.detect() }
     }
 
     fun loadWorlds() {
@@ -173,12 +178,36 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Re-fetch usage data from the server. Called on pull-to-refresh and on app
+     * foreground resume to detect tier changes made on the web (post-upgrade handling).
+     */
+    fun refreshUsage() {
+        viewModelScope.launch {
+            try {
+                userRepository.invalidate()
+                val usage = userRepository.fetchFresh()
+                _uiState.update {
+                    it.copy(
+                        worldsAtLimit = usage.worldsCreated >= usage.worldsLimit,
+                        usage = usage,
+                    )
+                }
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                Timber.e(e, "Failed to refresh usage")
+            }
+        }
+    }
+
     private fun checkUsageLimits() {
         viewModelScope.launch {
             try {
                 val usage = userRepository.getUsage()
                 _uiState.update {
-                    it.copy(worldsAtLimit = usage.worldsCreated >= usage.worldsLimit)
+                    it.copy(
+                        worldsAtLimit = usage.worldsCreated >= usage.worldsLimit,
+                        usage = usage,
+                    )
                 }
             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                 Timber.e(e, "Failed to check usage limits")
