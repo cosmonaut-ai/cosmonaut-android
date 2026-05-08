@@ -7,17 +7,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -31,6 +28,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.cosmonaut.app.ui.components.CosmoButton
+import com.cosmonaut.app.ui.components.CosmoButtonVariant
 import com.cosmonaut.app.ui.theme.CosmoTheme
 
 private const val DISABLED_FACE_ALPHA = 0.35f
@@ -126,24 +124,12 @@ fun SignInForm(
 
         DividerWithText()
 
-        OutlinedButton(
+        CosmoButton(
+            text = "Continue with Google",
             onClick = onGoogleSignIn,
+            variant = CosmoButtonVariant.Outline,
             enabled = !isSubmitting,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            shape = RoundedCornerShape(12.dp),
-            border = ButtonDefaults.outlinedButtonBorder(enabled = !isSubmitting).copy(
-                brush = androidx.compose.ui.graphics.SolidColor(
-                    CosmoTheme.colors.border.copy(alpha = 0.5f),
-                ),
-            ),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = CosmoTheme.colors.foreground,
-            ),
-        ) {
-            Text("Continue with Google")
-        }
+        )
 
         Row(
             modifier = Modifier.fillMaxWidth(),

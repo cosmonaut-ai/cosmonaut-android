@@ -22,6 +22,8 @@ import timber.log.Timber
 
 private const val POLL_INTERVAL_MS = 2000L
 private const val MAX_POLL_ATTEMPTS = 120
+private const val IMAGE_POLL_INTERVAL_MS = 4000L
+private const val IMAGE_MAX_POLL_ATTEMPTS = 60
 
 sealed interface WorldHomeUiState {
     data object Loading : WorldHomeUiState
@@ -57,6 +59,7 @@ class WorldHomeViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     private var pollingJob: Job? = null
+    private var imagePollingJob: Job? = null
 
     init {
         loadWorld()
@@ -135,10 +138,14 @@ class WorldHomeViewModel @Inject constructor(
                         world = world,
                         currentNodeId = progress?.currentNodeId,
                     )
+                    if (world.isImageGenerating) {
+                        startImagePolling()
+                    }
                 }
             }
             world.isFailed -> {
                 pollingJob?.cancel()
+                imagePollingJob?.cancel()
                 _uiState.value = WorldHomeUiState.Failed(world)
             }
             world.isGenerating -> {
@@ -175,8 +182,32 @@ class WorldHomeViewModel @Inject constructor(
         }
     }
 
+    private fun startImagePolling() {
+        imagePollingJob?.cancel()
+        imagePollingJob = viewModelScope.launch {
+            var attempts = 0
+            while (attempts < IMAGE_MAX_POLL_ATTEMPTS) {
+                delay(IMAGE_POLL_INTERVAL_MS)
+                attempts++
+                try {
+                    worldRepository.invalidateWorld(worldId)
+                    val world = worldRepository.getWorld(worldId)
+                    if (!world.isImageGenerating) {
+                        _uiState.update {
+                            if (it is WorldHomeUiState.Ready) it.copy(world = world) else it
+                        }
+                        return@launch
+                    }
+                } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                    Timber.e(e, "Image polling error for world $worldId")
+                }
+            }
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         pollingJob?.cancel()
+        imagePollingJob?.cancel()
     }
 }

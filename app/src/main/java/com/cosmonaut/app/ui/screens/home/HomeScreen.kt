@@ -40,6 +40,7 @@ import com.cosmonaut.app.ui.components.CosmoEmptyState
 import com.cosmonaut.app.ui.components.CosmoErrorState
 import com.cosmonaut.app.ui.components.DeleteConfirmationDialog
 import com.cosmonaut.app.ui.components.FeaturedWorldsCarousel
+import com.cosmonaut.app.ui.components.FeaturedWorldsCarouselSkeleton
 import com.cosmonaut.app.ui.components.SubscriptionStatusBanner
 import com.cosmonaut.app.ui.components.WorldCard
 import com.cosmonaut.app.ui.components.WorldCardSkeleton
@@ -137,7 +138,12 @@ private fun LoadingState() {
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        item {
+        item(key = "featured_skeleton", contentType = "featured_skeleton") {
+            FeaturedWorldsCarouselSkeleton(
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+        }
+        item(key = "section_header", contentType = "header") {
             SectionHeader()
         }
         items(3) {
@@ -196,7 +202,13 @@ private fun WorldList(
             }
         }
 
-        if (state.featuredWorlds.isNotEmpty()) {
+        if (state.isLoadingFeatured) {
+            item(key = "featured_skeleton", contentType = "featured_skeleton") {
+                FeaturedWorldsCarouselSkeleton(
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            }
+        } else if (state.featuredWorlds.isNotEmpty()) {
             item(key = "featured_carousel", contentType = "featured") {
                 FeaturedWorldsCarousel(
                     worlds = state.featuredWorlds,

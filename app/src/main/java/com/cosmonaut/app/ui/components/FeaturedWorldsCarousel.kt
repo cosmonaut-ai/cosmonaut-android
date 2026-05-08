@@ -49,6 +49,7 @@ import kotlinx.coroutines.launch
 
 private const val CARD_WIDTH_DP = 220
 private const val IMAGE_HEIGHT_DP = 120
+private const val SKELETON_COUNT = 3
 private const val ENTRANCE_DURATION_MS = 400
 private const val STAGGER_DELAY_MS = 50L
 private val EntranceEasing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
@@ -229,6 +230,90 @@ private fun FeaturedCardContent(world: WorldResponse) {
                 overflow = TextOverflow.Ellipsis,
                 lineHeight = MaterialTheme.typography.bodySmall.lineHeight,
             )
+        }
+    }
+}
+
+@Composable
+fun FeaturedWorldsCarouselSkeleton(modifier: Modifier = Modifier) {
+    val shimmerColor = CosmoTheme.colors.muted
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .width(140.dp)
+                .height(20.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(shimmerColor)
+                .shimmer(),
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(end = 16.dp),
+            userScrollEnabled = false,
+        ) {
+            items(SKELETON_COUNT) {
+                FeaturedCardSkeleton(shimmerColor)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FeaturedCardSkeleton(shimmerColor: androidx.compose.ui.graphics.Color) {
+    GlassCard(
+        modifier = Modifier.width(CARD_WIDTH_DP.dp),
+        cornerRadius = 14.dp,
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IMAGE_HEIGHT_DP.dp)
+                    .clip(RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp))
+                    .background(shimmerColor)
+                    .shimmer(),
+            )
+            Column(modifier = Modifier.padding(12.dp)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .height(16.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(shimmerColor)
+                        .shimmer(),
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier
+                        .width(60.dp)
+                        .height(18.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(shimmerColor)
+                        .shimmer(),
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(12.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(shimmerColor)
+                        .shimmer(),
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .height(12.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(shimmerColor)
+                        .shimmer(),
+                )
+            }
         }
     }
 }
