@@ -19,6 +19,11 @@ sealed interface CosmoRoute {
     @Serializable
     data object Settings : CosmoRoute
 
+    // ── Settings Sub-Destinations ───────────────────────────────────
+
+    @Serializable
+    data object Feedback : CosmoRoute
+
     // ── Auth ────────────────────────────────────────────────────────
 
     @Serializable

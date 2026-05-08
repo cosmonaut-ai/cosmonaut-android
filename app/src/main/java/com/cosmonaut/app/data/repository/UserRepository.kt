@@ -1,6 +1,7 @@
 package com.cosmonaut.app.data.repository
 
 import com.cosmonaut.app.data.remote.CosmoApiService
+import com.cosmonaut.app.data.remote.dto.FeedbackRequest
 import com.cosmonaut.app.data.remote.dto.NewsletterRequest
 import com.cosmonaut.app.data.remote.dto.SetUsernameRequest
 import com.cosmonaut.app.data.remote.dto.UsageResponse
@@ -55,6 +56,10 @@ class UserRepository @Inject constructor(
     suspend fun deleteAccount() {
         apiService.deleteAccount()
         invalidate()
+    }
+
+    suspend fun submitFeedback(category: String, message: String) {
+        apiService.submitFeedback(FeedbackRequest(category = category, message = message))
     }
 
     suspend fun invalidate() {

@@ -23,6 +23,7 @@ import com.cosmonaut.app.ui.screens.create.CreateScreen
 import com.cosmonaut.app.ui.screens.home.HomeScreen
 import com.cosmonaut.app.ui.screens.onboarding.OnboardingCarouselScreen
 import com.cosmonaut.app.ui.screens.onboarding.OnboardingScreen
+import com.cosmonaut.app.ui.screens.settings.FeedbackScreen
 import com.cosmonaut.app.ui.screens.settings.SettingsScreen
 import com.cosmonaut.app.ui.screens.story.StoryReaderScreen
 import com.cosmonaut.app.ui.screens.storymap.StoryMapScreen
@@ -152,7 +153,17 @@ fun CosmoNavHost(
             popEnterTransition = { bottomNavEnter() },
             popExitTransition = { bottomNavExit() },
         ) {
-            SettingsScreen()
+            SettingsScreen(
+                onNavigateToFeedback = {
+                    navController.navigate(CosmoRoute.Feedback)
+                },
+            )
+        }
+
+        composable<CosmoRoute.Feedback> {
+            FeedbackScreen(
+                onNavigateBack = { navController.popBackStack() },
+            )
         }
 
         // ── World Destinations ────────────────────────────────────
