@@ -142,6 +142,11 @@ fun CosmoNavHost(
                 onNavigateToStoryNode = { worldId, nodeId ->
                     navController.navigate(CosmoRoute.StoryNode(worldId, nodeId))
                 },
+                onNavigateToCreate = {
+                    navController.navigate(CosmoRoute.Create) {
+                        launchSingleTop = true
+                    }
+                },
             )
         }
 

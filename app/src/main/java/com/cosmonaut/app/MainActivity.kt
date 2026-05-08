@@ -158,7 +158,12 @@ private fun CosmoAppContent(
         }
 
         is AuthState.Authenticated -> {
-            AuthenticatedShell(pendingDeepLink = pendingDeepLink, analytics = analytics)
+            val hasCompletedOnboarding by preferences.hasCompletedOnboarding.collectAsState(initial = true)
+            AuthenticatedShell(
+                pendingDeepLink = pendingDeepLink,
+                analytics = analytics,
+                hasCompletedOnboarding = hasCompletedOnboarding,
+            )
         }
     }
 }
@@ -186,7 +191,16 @@ private fun UnauthenticatedShell(startDestination: CosmoRoute, onCarouselSeen: (
 }
 
 @Composable
-private fun AuthenticatedShell(pendingDeepLink: MutableStateFlow<DeepLinkData?>, analytics: CosmoAnalytics) {
+private fun AuthenticatedShell(
+    pendingDeepLink: MutableStateFlow<DeepLinkData?>,
+    analytics: CosmoAnalytics,
+    hasCompletedOnboarding: Boolean,
+) {
+    val startDestination: CosmoRoute = if (hasCompletedOnboarding) {
+        CosmoRoute.Home
+    } else {
+        CosmoRoute.Onboarding
+    }
     val navController = rememberNavController()
     TrackScreenViews(navController = navController, analytics = analytics)
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -215,7 +229,8 @@ private fun AuthenticatedShell(pendingDeepLink: MutableStateFlow<DeepLinkData?>,
     val showBottomBar = currentDestination?.let { dest ->
         !dest.hasRoute(CosmoRoute.StoryNode::class) &&
             !dest.hasRoute(CosmoRoute.StoryMap::class) &&
-            !dest.hasRoute(CosmoRoute.Feedback::class)
+            !dest.hasRoute(CosmoRoute.Feedback::class) &&
+            !dest.hasRoute(CosmoRoute.Onboarding::class)
     } ?: true
 
     Scaffold(
@@ -263,7 +278,7 @@ private fun AuthenticatedShell(pendingDeepLink: MutableStateFlow<DeepLinkData?>,
     ) { innerPadding ->
         CosmoNavHost(
             navController = navController,
-            startDestination = CosmoRoute.Home,
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding),
             audioViewModel = audioViewModel,
         )

@@ -36,6 +36,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
+import com.cosmonaut.app.ui.components.CosmoButton
 import com.cosmonaut.app.ui.components.CosmoEmptyState
 import com.cosmonaut.app.ui.components.CosmoErrorState
 import com.cosmonaut.app.ui.components.DeleteConfirmationDialog
@@ -55,6 +56,7 @@ fun HomeScreen(
     onNavigateToWorld: (String) -> Unit,
     onNavigateToStoryNode: (String, String) -> Unit,
     modifier: Modifier = Modifier,
+    onNavigateToCreate: (() -> Unit)? = null,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -101,12 +103,6 @@ fun HomeScreen(
                     onRetry = viewModel::loadWorlds,
                 )
             }
-            state.worlds.isEmpty() -> {
-                CosmoEmptyState(
-                    title = "No Stories Yet",
-                    subtitle = "Create your first interactive story\nand start exploring!",
-                )
-            }
             else -> {
                 PullToRefreshBox(
                     isRefreshing = state.isRefreshing,
@@ -120,6 +116,7 @@ fun HomeScreen(
                         onDeleteClick = viewModel::requestDelete,
                         onLoadMore = viewModel::loadMore,
                         onNavigateToWorld = onNavigateToWorld,
+                        onNavigateToCreate = onNavigateToCreate,
                         regionDetector = viewModel.regionDetector,
                     )
                 }
@@ -173,6 +170,7 @@ private fun WorldList(
     onDeleteClick: (com.cosmonaut.app.data.remote.dto.WorldResponse) -> Unit,
     onLoadMore: () -> Unit,
     onNavigateToWorld: (String) -> Unit,
+    onNavigateToCreate: (() -> Unit)? = null,
     regionDetector: com.cosmonaut.app.data.billing.RegionDetector? = null,
 ) {
     val listState = rememberLazyListState()
@@ -222,33 +220,52 @@ private fun WorldList(
             SectionHeader()
         }
 
-        itemsIndexed(
-            items = state.worlds,
-            key = { _, world -> world.id },
-            contentType = { _, _ -> "world_card" },
-        ) { index, world ->
-            WorldCard(
-                world = world,
-                onCardClick = { onWorldClick(world) },
-                onPlayClick = { onPlayClick(world) },
-                onDeleteClick = { onDeleteClick(world) },
-                entranceDelay = index * STAGGER_DELAY_MS,
-            )
-        }
+        if (state.worlds.isEmpty()) {
+            item(key = "empty_worlds", contentType = "empty") {
+                CosmoEmptyState(
+                    title = "No Stories Yet",
+                    subtitle = "Create your first interactive story\nand start exploring!",
+                    action = if (onNavigateToCreate != null) {
+                        {
+                            CosmoButton(
+                                text = "Create a Story",
+                                onClick = onNavigateToCreate,
+                            )
+                        }
+                    } else {
+                        null
+                    },
+                )
+            }
+        } else {
+            itemsIndexed(
+                items = state.worlds,
+                key = { _, world -> world.id },
+                contentType = { _, _ -> "world_card" },
+            ) { index, world ->
+                WorldCard(
+                    world = world,
+                    onCardClick = { onWorldClick(world) },
+                    onPlayClick = { onPlayClick(world) },
+                    onDeleteClick = { onDeleteClick(world) },
+                    entranceDelay = index * STAGGER_DELAY_MS,
+                )
+            }
 
-        if (state.isLoadingMore) {
-            item(key = "loading_more", contentType = "loading") {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator(
-                        color = CosmoTheme.colors.primary,
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp,
-                    )
+            if (state.isLoadingMore) {
+                item(key = "loading_more", contentType = "loading") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(
+                            color = CosmoTheme.colors.primary,
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp,
+                        )
+                    }
                 }
             }
         }

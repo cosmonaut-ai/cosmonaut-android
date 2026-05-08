@@ -1,12 +1,15 @@
 package com.cosmonaut.app.ui.screens.auth.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -15,20 +18,22 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.cosmonaut.app.R
 import com.cosmonaut.app.ui.components.CosmoButton
 import com.cosmonaut.app.ui.components.CosmoButtonVariant
+import com.cosmonaut.app.ui.components.CosmoTextField
 import com.cosmonaut.app.ui.theme.CosmoTheme
 
 private const val DISABLED_FACE_ALPHA = 0.35f
@@ -48,19 +53,16 @@ fun SignInForm(
     onForgotPassword: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val fieldColors = cosmoTextFieldColors()
-
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        OutlinedTextField(
+        CosmoTextField(
             value = email,
             onValueChange = onEmailChange,
-            label = { Text("Email") },
-            singleLine = true,
+            label = "Email",
+            placeholder = "you@example.com",
             enabled = !isSubmitting,
-            colors = fieldColors,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next,
@@ -68,13 +70,12 @@ fun SignInForm(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        OutlinedTextField(
+        CosmoTextField(
             value = password,
             onValueChange = onPasswordChange,
-            label = { Text("Password") },
-            singleLine = true,
+            label = "Password",
+            placeholder = "Enter your password",
             enabled = !isSubmitting,
-            colors = fieldColors,
             visualTransformation = if (showPassword) {
                 VisualTransformation.None
             } else {
@@ -98,22 +99,18 @@ fun SignInForm(
                 imeAction = ImeAction.Done,
             ),
             keyboardActions = KeyboardActions(onDone = { onSignIn() }),
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            TextButton(onClick = onForgotPassword, enabled = !isSubmitting) {
+            labelTrailing = {
                 Text(
-                    "Forgot password?",
-                    color = CosmoTheme.colors.primary.copy(
+                    text = "Forgot password?",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = CosmoTheme.colors.mutedForeground.copy(
                         alpha = if (isSubmitting) DISABLED_FACE_ALPHA else 1f,
                     ),
+                    modifier = Modifier.clickable(enabled = !isSubmitting) { onForgotPassword() },
                 )
-            }
-        }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
 
         CosmoButton(
             text = "Sign In",
@@ -125,11 +122,21 @@ fun SignInForm(
         DividerWithText()
 
         CosmoButton(
-            text = "Continue with Google",
             onClick = onGoogleSignIn,
             variant = CosmoButtonVariant.Outline,
             enabled = !isSubmitting,
-        )
+        ) {
+            Image(
+                painter = painterResource(R.drawable.ic_google),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                text = "Continue with Google",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -174,17 +181,3 @@ fun DividerWithText(modifier: Modifier = Modifier) {
         )
     }
 }
-
-@Composable
-fun cosmoTextFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = CosmoTheme.colors.foreground,
-    unfocusedTextColor = CosmoTheme.colors.foreground,
-    focusedBorderColor = CosmoTheme.colors.primary,
-    unfocusedBorderColor = CosmoTheme.colors.border.copy(alpha = 0.5f),
-    focusedLabelColor = CosmoTheme.colors.primary,
-    unfocusedLabelColor = CosmoTheme.colors.mutedForeground,
-    cursorColor = CosmoTheme.colors.primary,
-    errorBorderColor = CosmoTheme.colors.destructive,
-    errorLabelColor = CosmoTheme.colors.destructive,
-    errorCursorColor = CosmoTheme.colors.destructive,
-)

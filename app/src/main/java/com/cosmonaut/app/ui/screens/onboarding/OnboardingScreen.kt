@@ -24,7 +24,6 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -45,8 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.cosmonaut.app.R
 import com.cosmonaut.app.ui.components.CosmoButton
+import com.cosmonaut.app.ui.components.CosmoTextField
 import com.cosmonaut.app.ui.components.GlassCard
-import com.cosmonaut.app.ui.screens.auth.components.cosmoTextFieldColors
 import com.cosmonaut.app.ui.theme.CosmoTheme
 import com.cosmonaut.app.ui.theme.OrbitronFontFamily
 
@@ -155,21 +154,15 @@ fun OnboardingScreen(
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
                     // Username
-                    Text(
-                        text = "Choose a username",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = CosmoTheme.colors.foreground,
-                    )
-                    OutlinedTextField(
+                    CosmoTextField(
                         value = state.username,
                         onValueChange = viewModel::updateUsername,
-                        label = { Text("Username") },
-                        singleLine = true,
+                        label = "What should we call you?",
+                        placeholder = "yourname",
                         enabled = !state.isSubmitting,
-                        colors = cosmoTextFieldColors(),
                         isError = state.usernameStatus == UsernameStatus.TAKEN ||
                             state.usernameStatus == UsernameStatus.INVALID,
-                        supportingText = { UsernameHelperText(state.usernameStatus) },
+                        supportingContent = { UsernameHelperText(state.usernameStatus) },
                         trailingIcon = { UsernameStatusIcon(state.usernameStatus) },
                         modifier = Modifier.fillMaxWidth(),
                     )

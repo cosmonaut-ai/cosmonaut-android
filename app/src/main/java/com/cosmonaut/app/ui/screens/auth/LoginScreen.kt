@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -37,13 +36,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -62,9 +59,6 @@ import com.cosmonaut.app.ui.theme.OrbitronFontFamily
 private const val SLIDE_OFFSET_DIVISOR = 3
 private const val GLOW_RADIUS_FRACTION = 0.6f
 private const val GLOW_ALPHA = 0.07f
-private const val ILLUSTRATION_ALPHA = 0.9f
-private const val IMAGE_GLOW_ALPHA = 0.15f
-private const val IMAGE_GLOW_RADIUS_FRACTION = 1.2f
 
 private val taglines = listOf(
     "Don't forget your spacesuit!",
@@ -129,11 +123,6 @@ fun LoginScreen(
         ) {
             // Logo + Brand
             BrandHeader(tagline = tagline)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Astronaut illustration
-            AstronautIllustration()
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -309,55 +298,6 @@ private fun BrandHeader(tagline: String, modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-private fun AstronautIllustration(modifier: Modifier = Modifier) {
-    val glowColor = CosmoTheme.colors.primary
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(160.dp)
-            .drawBehind {
-                val glowCenter = Offset(
-                    x = size.width / 2f + 12.dp.toPx(),
-                    y = size.height / 2f,
-                )
-                val glowRadius = size.minDimension * IMAGE_GLOW_RADIUS_FRACTION
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            glowColor.copy(alpha = IMAGE_GLOW_ALPHA),
-                            Color.Transparent,
-                        ),
-                        center = glowCenter,
-                        radius = glowRadius,
-                    ),
-                    radius = glowRadius,
-                    center = glowCenter,
-                )
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        Image(
-            painter = painterResource(R.drawable.art_sign_in_doorway),
-            contentDescription = null,
-            modifier = Modifier
-                .height(150.dp)
-                .alpha(ILLUSTRATION_ALPHA),
-            contentScale = ContentScale.Fit,
-        )
-
-        Image(
-            painter = painterResource(R.drawable.art_sign_in_astronaut),
-            contentDescription = null,
-            modifier = Modifier
-                .height(70.dp)
-                .offset(x = (-50).dp, y = 10.dp)
-                .alpha(ILLUSTRATION_ALPHA),
-            contentScale = ContentScale.Fit,
-        )
-    }
-}
 
 @Composable
 private fun MessageBanner(text: String, color: Color, modifier: Modifier = Modifier,) {

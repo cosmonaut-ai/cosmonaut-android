@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -17,6 +16,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.cosmonaut.app.ui.components.CosmoButton
+import com.cosmonaut.app.ui.components.CosmoTextField
 import com.cosmonaut.app.ui.theme.CosmoTheme
 
 private const val VERIFICATION_CODE_LENGTH = 6
@@ -50,17 +50,16 @@ fun VerifyForm(
             textAlign = TextAlign.Center,
         )
 
-        OutlinedTextField(
+        CosmoTextField(
             value = code,
             onValueChange = { newValue ->
                 if (newValue.length <= VERIFICATION_CODE_LENGTH && newValue.all { it.isDigit() }) {
                     onCodeChange(newValue)
                 }
             },
-            label = { Text("Verification Code") },
-            singleLine = true,
+            label = "Verification Code",
+            placeholder = "123456",
             enabled = !isSubmitting,
-            colors = cosmoTextFieldColors(),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
                 imeAction = ImeAction.Done,
