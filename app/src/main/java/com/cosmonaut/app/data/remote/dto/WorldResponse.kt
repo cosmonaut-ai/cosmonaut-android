@@ -86,6 +86,7 @@ data class WorldResponse(
             "initialized",
         )
     val isFailed: Boolean get() = generationStatus == "failed"
+    val isImageGenerating: Boolean get() = imageGenerationStatus == "pending"
 
     val generationStatusDisplay: String
         get() = when (generationStatus) {

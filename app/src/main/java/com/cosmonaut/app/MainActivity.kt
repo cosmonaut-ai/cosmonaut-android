@@ -231,12 +231,22 @@ private fun AuthenticatedShell(pendingDeepLink: MutableStateFlow<DeepLinkData?>)
                     CosmoBottomBar(
                         currentNavItem = currentNavItem,
                         onItemSelected = { item ->
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                            if (item == BottomNavItem.HOME) {
+                                if (currentNavItem == BottomNavItem.HOME) return@CosmoBottomBar
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        inclusive = true
+                                    }
+                                    launchSingleTop = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
+                            } else {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         },
                     )

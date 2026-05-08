@@ -38,7 +38,6 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -81,6 +80,7 @@ import com.cosmonaut.app.ui.components.CosmoButtonVariant
 import com.cosmonaut.app.ui.components.CosmoHaptics
 import com.cosmonaut.app.ui.components.SubscriptionPlanCard
 import com.cosmonaut.app.ui.components.UsageCard
+import com.cosmonaut.app.ui.components.shimmer
 import com.cosmonaut.app.ui.theme.CosmoTheme
 import kotlinx.coroutines.flow.collectLatest
 
@@ -144,7 +144,9 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         if (isLoading) {
-            LoadingPlaceholder()
+            SubscriptionSkeleton()
+            Spacer(modifier = Modifier.height(16.dp))
+            UsageSkeleton()
         } else if (usage != null) {
             SubscriptionPlanCard(
                 usage = usage!!,
@@ -724,17 +726,167 @@ private fun SectionHeader(title: String, icon: ImageVector) {
 }
 
 @Composable
-private fun LoadingPlaceholder() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(120.dp),
-        contentAlignment = Alignment.Center,
+private fun SubscriptionSkeleton() {
+    val shimmerColor = CosmoTheme.colors.muted
+
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = CosmoTheme.colors.card,
+        border = BorderStroke(1.dp, CosmoTheme.colors.border),
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(24.dp),
-            color = CosmoTheme.colors.primary,
-            strokeWidth = 2.dp,
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(shimmerColor)
+                        .shimmer(),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .width(100.dp)
+                        .height(18.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(shimmerColor)
+                        .shimmer(),
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .width(120.dp)
+                        .height(18.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(shimmerColor)
+                        .shimmer(),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .width(48.dp)
+                        .height(20.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(shimmerColor)
+                        .shimmer(),
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Box(
+                modifier = Modifier
+                    .width(160.dp)
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(shimmerColor)
+                    .shimmer(),
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(45.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(shimmerColor)
+                    .shimmer(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun UsageSkeleton() {
+    val shimmerColor = CosmoTheme.colors.muted
+
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = CosmoTheme.colors.card,
+        border = BorderStroke(1.dp, CosmoTheme.colors.border),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(shimmerColor)
+                        .shimmer(),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .width(60.dp)
+                        .height(18.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(shimmerColor)
+                        .shimmer(),
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            UsageBarSkeleton(shimmerColor)
+            Spacer(modifier = Modifier.height(16.dp))
+            UsageBarSkeleton(shimmerColor)
+            Spacer(modifier = Modifier.height(12.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(38.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(shimmerColor.copy(alpha = 0.5f))
+                    .shimmer(),
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(color = CosmoTheme.colors.border)
+            Spacer(modifier = Modifier.height(16.dp))
+            UsageBarSkeleton(shimmerColor)
+            Spacer(modifier = Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(shimmerColor)
+                    .shimmer(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun UsageBarSkeleton(shimmerColor: androidx.compose.ui.graphics.Color) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(110.dp)
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(shimmerColor)
+                    .shimmer(),
+            )
+            Box(
+                modifier = Modifier
+                    .width(40.dp)
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(shimmerColor)
+                    .shimmer(),
+            )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(shimmerColor)
+                .shimmer(),
         )
     }
 }

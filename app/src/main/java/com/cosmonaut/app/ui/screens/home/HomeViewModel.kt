@@ -26,6 +26,7 @@ data class HomeUiState(
     val worlds: ImmutableList<WorldResponse> = persistentListOf(),
     val featuredWorlds: ImmutableList<WorldResponse> = persistentListOf(),
     val isLoading: Boolean = true,
+    val isLoadingFeatured: Boolean = true,
     val isLoadingMore: Boolean = false,
     val isRefreshing: Boolean = false,
     val error: String? = null,
@@ -89,11 +90,18 @@ class HomeViewModel @Inject constructor(
 
     private fun loadFeaturedWorlds() {
         viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingFeatured = true) }
             try {
                 val featured = worldRepository.getFeaturedWorlds()
-                _uiState.update { it.copy(featuredWorlds = featured.toImmutableList()) }
+                _uiState.update {
+                    it.copy(
+                        featuredWorlds = featured.toImmutableList(),
+                        isLoadingFeatured = false,
+                    )
+                }
             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                 Timber.e(e, "Failed to load featured worlds")
+                _uiState.update { it.copy(isLoadingFeatured = false) }
             }
         }
     }

@@ -7,7 +7,12 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -99,6 +104,9 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
 
+private const val IMAGE_PULSE_MIN_ALPHA = 0.12f
+private const val IMAGE_PULSE_MAX_ALPHA = 0.28f
+private const val IMAGE_PULSE_DURATION_MS = 2200
 private const val BACK_BUTTON_BG_ALPHA = 0.5f
 private const val CHAR_INITIAL_BG_ALPHA = 0.2f
 private const val DIVIDER_ALPHA = 0.15f
@@ -357,6 +365,8 @@ private fun HeroSection(world: WorldResponse) {
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
             )
+        } else if (world.isImageGenerating) {
+            ImageGeneratingPlaceholder()
         } else {
             Box(
                 modifier = Modifier
@@ -435,6 +445,33 @@ private fun HeroSection(world: WorldResponse) {
             }
         }
     }
+}
+
+@Composable
+private fun ImageGeneratingPlaceholder() {
+    val infiniteTransition = rememberInfiniteTransition(label = "imagePulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = IMAGE_PULSE_MIN_ALPHA,
+        targetValue = IMAGE_PULSE_MAX_ALPHA,
+        animationSpec = infiniteRepeatable(
+            animation = tween(IMAGE_PULSE_DURATION_MS),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "imagePulseAlpha",
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        CosmoTheme.colors.primary.copy(alpha = pulseAlpha),
+                        CosmoTheme.colors.accent.copy(alpha = pulseAlpha * 0.7f),
+                    ),
+                ),
+            ),
+    )
 }
 
 // ── Stats ───────────────────────────────────────────────────────────────

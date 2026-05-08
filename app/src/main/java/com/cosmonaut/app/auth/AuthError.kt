@@ -38,6 +38,11 @@ object AuthError {
         message.contains("LimitExceededException", ignoreCase = true) ->
             "Too many attempts. Please wait a moment and try again."
 
+        message.contains("InvalidParameterException", ignoreCase = true) ||
+            message.contains("One or more parameters are incorrect", ignoreCase = true) ->
+            "Unable to process this request. If you signed in with Google, " +
+                "try using Google Sign-In instead."
+
         message.contains("UserNotConfirmedException", ignoreCase = true) ->
             "Email not verified. Please check your email for a verification code."
 
