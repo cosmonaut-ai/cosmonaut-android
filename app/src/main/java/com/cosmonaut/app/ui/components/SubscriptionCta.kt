@@ -2,26 +2,25 @@ package com.cosmonaut.app.ui.components
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.OpenInNew
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.cosmonaut.app.BuildConfig
 import com.cosmonaut.app.data.billing.RegionDetector
@@ -87,7 +86,7 @@ fun SubscriptionCta(
                 modifier = modifier,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.OpenInNew,
+                    imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
                 )
@@ -107,7 +106,7 @@ fun SubscriptionCta(
                 modifier = modifier.fillMaxWidth(),
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.OpenInNew,
+                    imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
                 )
@@ -116,44 +115,29 @@ fun SubscriptionCta(
             }
         }
     } else {
-        if (compact) {
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = CosmoTheme.colors.mutedForeground,
-                modifier = modifier,
-            )
-        } else {
-            Column(
-                modifier = modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.OpenInNew,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp),
-                        tint = CosmoTheme.colors.mutedForeground,
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = CosmoTheme.colors.mutedForeground,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Open your browser to manage billing",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = CosmoTheme.colors.mutedForeground.copy(alpha = 0.7f),
-                    textAlign = TextAlign.Center,
-                )
+        val domain = webBaseUrl.removePrefix("https://")
+        val path = when (action) {
+            SubscriptionCtaAction.UPGRADE -> "/pricing"
+            SubscriptionCtaAction.MANAGE, SubscriptionCtaAction.REACTIVATE -> "/settings"
+        }
+        val verb = when (action) {
+            SubscriptionCtaAction.UPGRADE -> "View plans"
+            SubscriptionCtaAction.MANAGE -> "Manage your subscription"
+            SubscriptionCtaAction.REACTIVATE -> "Reactivate your subscription"
+        }
+        val annotated = buildAnnotatedString {
+            append("$verb at ")
+            withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = CosmoTheme.colors.foreground)) {
+                append("$domain$path")
             }
         }
+
+        Text(
+            text = annotated,
+            style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
+            color = CosmoTheme.colors.mutedForeground,
+            textAlign = TextAlign.Center,
+            modifier = if (compact) modifier else modifier.fillMaxWidth(),
+        )
     }
 }

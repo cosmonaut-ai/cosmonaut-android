@@ -3,8 +3,6 @@ package com.cosmonaut.app.ui.screens.create
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,10 +36,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -58,12 +57,11 @@ import com.cosmonaut.app.ui.components.CosmoSegmentedControl
 import com.cosmonaut.app.ui.components.GlassCard
 import com.cosmonaut.app.ui.components.SegmentOption
 import com.cosmonaut.app.ui.components.VisibilitySelector
+import com.cosmonaut.app.ui.screens.story.components.UpgradePromptDialog
 import com.cosmonaut.app.ui.theme.CosmoTheme
 
 private const val MAX_PROMPT_LENGTH = 2000
 private const val PROMPT_MIN_LINES = 4
-private const val WARNING_BG_ALPHA = 0.1f
-private const val WARNING_BORDER_ALPHA = 0.3f
 
 @Composable
 fun CreateScreen(
@@ -74,6 +72,7 @@ fun CreateScreen(
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val view = LocalView.current
+    var showQuotaDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -86,8 +85,20 @@ fun CreateScreen(
                     message = event.message,
                     duration = SnackbarDuration.Short,
                 )
+                is CreateEvent.ShowQuotaDialog -> {
+                    showQuotaDialog = true
+                }
             }
         }
+    }
+
+    if (showQuotaDialog) {
+        UpgradePromptDialog(
+            resource = "worlds",
+            regionDetector = viewModel.regionDetector,
+            usage = state.usage,
+            onDismiss = { showQuotaDialog = false },
+        )
     }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -107,10 +118,6 @@ fun CreateScreen(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.semantics { heading() },
             )
-
-            if (state.worldsAtLimit) {
-                QuotaWarning(regionDetector = viewModel.regionDetector)
-            }
 
             GlassCard {
                 Column(
@@ -141,7 +148,7 @@ fun CreateScreen(
                         text = "Create Story",
                         onClick = viewModel::createWorld,
                         isLoading = state.isSubmitting,
-                        enabled = !state.isSubmitting && !state.worldsAtLimit,
+                        enabled = !state.isSubmitting,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -152,43 +159,6 @@ fun CreateScreen(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
-    }
-}
-
-@Composable
-private fun QuotaWarning(
-    modifier: Modifier = Modifier,
-    regionDetector: com.cosmonaut.app.data.billing.RegionDetector? = null,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(
-                CosmoTheme.colors.destructive.copy(alpha = WARNING_BG_ALPHA),
-            )
-            .border(
-                width = 1.dp,
-                color = CosmoTheme.colors.destructive.copy(
-                    alpha = WARNING_BORDER_ALPHA,
-                ),
-                shape = RoundedCornerShape(12.dp),
-            )
-            .padding(16.dp),
-    ) {
-        Text(
-            text = "You\u2019ve reached your world creation limit.",
-            style = MaterialTheme.typography.bodySmall,
-            color = CosmoTheme.colors.destructive,
-        )
-        if (regionDetector != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            com.cosmonaut.app.ui.components.SubscriptionCta(
-                action = com.cosmonaut.app.ui.components.SubscriptionCtaAction.UPGRADE,
-                regionDetector = regionDetector,
-                compact = true,
-            )
-        }
     }
 }
 

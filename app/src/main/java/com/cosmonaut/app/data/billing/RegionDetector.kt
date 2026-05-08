@@ -1,9 +1,12 @@
 package com.cosmonaut.app.data.billing
 
 import android.content.Context
+import android.provider.Settings
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.GetBillingConfigParams
+import com.cosmonaut.app.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,7 +21,7 @@ import timber.log.Timber
  * Determines whether the user is in the US for Google Play external billing compliance.
  *
  * Strategy:
- * 1. Primary: Google Play Billing Library's user country code
+ * 1. Primary: Google Play Billing Library's BillingConfig country code
  * 2. Fallback: Device locale country
  * 3. Default: Non-US (safe default per policy — no links to transactional pages)
  *
@@ -27,7 +30,7 @@ import timber.log.Timber
  * restrictive behavior.
  */
 @Singleton
-class RegionDetector @Inject constructor(@ApplicationContext private val context: Context,) {
+class RegionDetector @Inject constructor(@ApplicationContext private val context: Context) {
     private val _isUsUser = MutableStateFlow<Boolean?>(null)
     val isUsUser: StateFlow<Boolean?> = _isUsUser.asStateFlow()
 
@@ -35,13 +38,37 @@ class RegionDetector @Inject constructor(@ApplicationContext private val context
         get() = _isUsUser.value == true
 
     suspend fun detect() {
-        if (_isUsUser.value != null) return
+        val debugOverride = getDebugCountryOverride()
+        val billingCountry = if (debugOverride != null) null else getPlayBillingCountry()
+        val localeCountry = getDeviceLocaleCountry()
+        Timber.d(
+            "Region signals: debug=%s, billing=%s, locale=%s",
+            debugOverride,
+            billingCountry,
+            localeCountry,
+        )
 
-        val countryCode = getPlayBillingCountry()
-            ?: getDeviceLocaleCountry()
+        val countryCode = debugOverride ?: billingCountry ?: localeCountry
+        val isUs = countryCode?.equals("US", ignoreCase = true) == true
+        _isUsUser.value = isUs
+        Timber.d("Region resolved: country=%s, isUS=%s", countryCode, isUs)
+    }
 
-        _isUsUser.value = countryCode?.equals("US", ignoreCase = true) == true
-        Timber.d("Region detected: country=%s, isUS=%s", countryCode, _isUsUser.value)
+    /**
+     * Debug-only: read country override from Settings.Global via adb.
+     *   adb shell settings put global debug_cosmonaut_country AD   (non-US)
+     *   adb shell settings put global debug_cosmonaut_country US   (US)
+     *   adb shell settings delete global debug_cosmonaut_country   (clear)
+     */
+    private fun getDebugCountryOverride(): String? {
+        if (!BuildConfig.DEBUG) return null
+        return try {
+            Settings.Global.getString(context.contentResolver, "debug_cosmonaut_country")
+                ?.takeIf { it.isNotBlank() }
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to read debug country override")
+            null
+        }
     }
 
     private suspend fun getPlayBillingCountry(): String? = suspendCancellableCoroutine { cont ->
@@ -52,22 +79,34 @@ class RegionDetector @Inject constructor(@ApplicationContext private val context
 
         client.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(result: BillingResult) {
-                val country = if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                    try {
-                        @Suppress("DEPRECATION")
-                        client.connectionState
-                        val method = client.javaClass.getMethod("getUserCountry")
-                        method.invoke(client) as? String
-                    } catch (e: Exception) {
-                        Timber.w(e, "Play Billing getUserCountry unavailable")
-                        null
+                if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                    val params = GetBillingConfigParams.newBuilder().build()
+                    client.getBillingConfigAsync(params) { billingResult, billingConfig ->
+                        val country = if (
+                            billingResult.responseCode == BillingClient.BillingResponseCode.OK &&
+                            billingConfig != null
+                        ) {
+                            billingConfig.countryCode
+                        } else {
+                            Timber.w(
+                                "getBillingConfigAsync failed: %d %s",
+                                billingResult.responseCode,
+                                billingResult.debugMessage,
+                            )
+                            null
+                        }
+                        client.endConnection()
+                        if (cont.isActive) cont.resume(country)
                     }
                 } else {
-                    Timber.w("Play Billing connection failed: %d", result.responseCode)
-                    null
+                    Timber.w(
+                        "Play Billing connection failed: %d %s",
+                        result.responseCode,
+                        result.debugMessage,
+                    )
+                    client.endConnection()
+                    if (cont.isActive) cont.resume(null)
                 }
-                client.endConnection()
-                if (cont.isActive) cont.resume(country)
             }
 
             override fun onBillingServiceDisconnected() {

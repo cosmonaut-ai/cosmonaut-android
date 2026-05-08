@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cosmonaut.app.data.billing.RegionDetector
 import com.cosmonaut.app.data.local.CosmoPreferences
+import com.cosmonaut.app.data.remote.asApiError
 import com.cosmonaut.app.data.remote.dto.CreateWorldRequest
+import com.cosmonaut.app.data.remote.dto.UsageResponse
 import com.cosmonaut.app.data.repository.UserRepository
 import com.cosmonaut.app.data.repository.WorldRepository
 import com.cosmonaut.app.util.PromptLoader
@@ -31,12 +33,13 @@ data class CreateUiState(
     val isSubmitting: Boolean = false,
     val promptError: String? = null,
     val showMoreSettings: Boolean = false,
-    val worldsAtLimit: Boolean = false,
+    val usage: UsageResponse? = null,
 )
 
 sealed interface CreateEvent {
     data class NavigateToWorld(val worldId: String) : CreateEvent
     data class ShowMessage(val message: String) : CreateEvent
+    data object ShowQuotaDialog : CreateEvent
 }
 
 @HiltViewModel
@@ -56,7 +59,7 @@ class CreateViewModel @Inject constructor(
 
     init {
         loadSavedPreferences()
-        checkUsageLimits()
+        loadUsage()
     }
 
     fun updatePrompt(prompt: String) {
@@ -117,15 +120,12 @@ class CreateViewModel @Inject constructor(
             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                 Timber.e(e, "Failed to create world")
                 _uiState.update { it.copy(isSubmitting = false) }
-                val isQuotaError = e.message?.contains("429") == true ||
-                    e.message?.contains("quota", ignoreCase = true) == true
-                val message = if (isQuotaError) {
-                    "You've reached your world creation limit. " +
-                        "Upgrade your plan to create more stories."
+                val apiError = e.asApiError()
+                if (apiError?.isQuotaExceeded == true) {
+                    _events.send(CreateEvent.ShowQuotaDialog)
                 } else {
-                    "Failed to create story. Please try again."
+                    _events.send(CreateEvent.ShowMessage("Failed to create story. Please try again."))
                 }
-                _events.send(CreateEvent.ShowMessage(message))
             }
         }
     }
@@ -145,15 +145,13 @@ class CreateViewModel @Inject constructor(
         }
     }
 
-    private fun checkUsageLimits() {
+    private fun loadUsage() {
         viewModelScope.launch {
             try {
                 val usage = userRepository.getUsage()
-                _uiState.update {
-                    it.copy(worldsAtLimit = usage.worldsCreated >= usage.worldsLimit)
-                }
+                _uiState.update { it.copy(usage = usage) }
             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-                Timber.e(e, "Failed to check usage limits")
+                Timber.e(e, "Failed to load usage")
             }
         }
     }

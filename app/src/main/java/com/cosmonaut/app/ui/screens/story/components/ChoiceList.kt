@@ -64,7 +64,6 @@ private const val CUSTOM_CHOICE_MAX_LENGTH = 200
 @Composable
 fun ChoiceList(
     choices: List<ChoiceResponse>,
-    isAtQuotaLimit: Boolean,
     isLoading: Boolean,
     onChoiceSelected: (targetId: String) -> Unit,
     onCustomChoice: (text: String) -> Unit,
@@ -109,7 +108,6 @@ fun ChoiceList(
                 ChoiceCard(
                     choice = choice,
                     index = index,
-                    isAtQuotaLimit = isAtQuotaLimit,
                     isLoading = isLoading,
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -119,18 +117,14 @@ fun ChoiceList(
             }
         }
 
-        if (!isAtQuotaLimit) {
-            Spacer(modifier = Modifier.height(8.dp))
-            CustomChoiceInput(
-                isLoading = isLoading,
-                onSubmit = { text ->
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onCustomChoice(text)
-                },
-            )
-        } else {
-            QuotaLimitBanner()
-        }
+        Spacer(modifier = Modifier.height(8.dp))
+        CustomChoiceInput(
+            isLoading = isLoading,
+            onSubmit = { text ->
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onCustomChoice(text)
+            },
+        )
     }
 }
 
@@ -139,14 +133,13 @@ fun ChoiceList(
 private fun ChoiceCard(
     choice: ChoiceResponse,
     index: Int,
-    isAtQuotaLimit: Boolean,
     isLoading: Boolean,
     onClick: () -> Unit,
 ) {
     val isExplored = choice.isExplored == true
     val isPreGenerated = choice.isCreated == true && !isExplored
     val isCustom = choice.isCustom == true
-    val isDisabled = isLoading || (isAtQuotaLimit && choice.isCreated != true)
+    val isDisabled = isLoading
 
     val borderColor = when {
         isExplored -> CosmoTheme.colors.muted
@@ -167,7 +160,6 @@ private fun ChoiceCard(
         if (isExplored) append(", already explored")
         if (isPreGenerated) append(", quick choice")
         if (isCustom) append(", custom choice")
-        if (isDisabled && isAtQuotaLimit) append(", quota limit reached")
     }
 
     Row(
@@ -303,30 +295,6 @@ private fun InlineBadge(
             text = text,
             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
             color = textColor,
-        )
-    }
-}
-
-@Composable
-private fun QuotaLimitBanner() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(
-                1.dp,
-                CosmoTheme.colors.primary.copy(alpha = 0.2f),
-                RoundedCornerShape(12.dp),
-            )
-            .background(CosmoTheme.colors.primary.copy(alpha = 0.05f))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = "You've reached your generation limit for this period.",
-            style = MaterialTheme.typography.bodySmall,
-            color = CosmoTheme.colors.mutedForeground,
-            modifier = Modifier.weight(1f),
         )
     }
 }
