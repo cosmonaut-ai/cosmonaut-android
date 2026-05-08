@@ -1,9 +1,11 @@
 package com.cosmonaut.app.ui.screens.auth.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -12,20 +14,23 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.cosmonaut.app.R
 import com.cosmonaut.app.ui.components.CosmoButton
 import com.cosmonaut.app.ui.components.CosmoButtonVariant
+import com.cosmonaut.app.ui.components.CosmoTextField
 import com.cosmonaut.app.ui.theme.CosmoTheme
 
 @Composable
@@ -47,19 +52,17 @@ fun SignUpForm(
     val rules = remember(password) { PasswordRules.evaluate(password) }
     val passwordsMatch = password == confirmPassword && confirmPassword.isNotEmpty()
     val canSubmit = rules.allPassed && passwordsMatch && email.isNotBlank()
-    val fieldColors = cosmoTextFieldColors()
 
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        OutlinedTextField(
+        CosmoTextField(
             value = email,
             onValueChange = onEmailChange,
-            label = { Text("Email") },
-            singleLine = true,
+            label = "Email",
+            placeholder = "you@example.com",
             enabled = !isSubmitting,
-            colors = fieldColors,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next,
@@ -67,13 +70,12 @@ fun SignUpForm(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        OutlinedTextField(
+        CosmoTextField(
             value = password,
             onValueChange = onPasswordChange,
-            label = { Text("Password") },
-            singleLine = true,
+            label = "Password",
+            placeholder = "Create a password",
             enabled = !isSubmitting,
-            colors = fieldColors,
             visualTransformation = if (showPassword) {
                 VisualTransformation.None
             } else {
@@ -103,13 +105,12 @@ fun SignUpForm(
             PasswordStrengthIndicator(rules = rules)
         }
 
-        OutlinedTextField(
+        CosmoTextField(
             value = confirmPassword,
             onValueChange = onConfirmPasswordChange,
-            label = { Text("Confirm Password") },
-            singleLine = true,
+            label = "Confirm Password",
+            placeholder = "Confirm your password",
             enabled = !isSubmitting,
-            colors = fieldColors,
             visualTransformation = if (showPassword) {
                 VisualTransformation.None
             } else {
@@ -117,7 +118,7 @@ fun SignUpForm(
             },
             isError = confirmPassword.isNotEmpty() && !passwordsMatch,
             supportingText = if (confirmPassword.isNotEmpty() && !passwordsMatch) {
-                { Text("Passwords do not match") }
+                "Passwords do not match"
             } else {
                 null
             },
@@ -139,11 +140,21 @@ fun SignUpForm(
         DividerWithText()
 
         CosmoButton(
-            text = "Sign up with Google",
             onClick = onGoogleSignIn,
             variant = CosmoButtonVariant.Outline,
             enabled = !isSubmitting,
-        )
+        ) {
+            Image(
+                painter = painterResource(R.drawable.ic_google),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                text = "Sign up with Google",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),

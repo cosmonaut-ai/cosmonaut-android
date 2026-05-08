@@ -18,6 +18,7 @@ import com.cosmonaut.app.data.store.firstData
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Store
 import org.mobilenativefoundation.store.store5.StoreReadRequest
 import org.mobilenativefoundation.store.store5.StoreReadResponse
@@ -91,6 +92,13 @@ class WorldRepository @Inject constructor(
 
     suspend fun invalidateProgress(worldId: String) {
         progressStore.clear(WorldProgressKey(worldId))
+    }
+
+    @OptIn(ExperimentalStoreApi::class)
+    suspend fun clearAll() {
+        worldStore.clear()
+        listStore.clear()
+        progressStore.clear()
     }
 
     // ── Sharing ──────────────────────────────────────────────────────

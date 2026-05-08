@@ -11,7 +11,6 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -25,6 +24,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.cosmonaut.app.ui.components.CosmoButton
+import com.cosmonaut.app.ui.components.CosmoTextField
 import com.cosmonaut.app.ui.theme.CosmoTheme
 
 private const val RESET_CODE_LENGTH = 6
@@ -97,13 +97,12 @@ private fun SendCodeContent(
             textAlign = TextAlign.Center,
         )
 
-        OutlinedTextField(
+        CosmoTextField(
             value = email,
             onValueChange = onEmailChange,
-            label = { Text("Email") },
-            singleLine = true,
+            label = "Email",
+            placeholder = "you@example.com",
             enabled = !isSubmitting,
-            colors = cosmoTextFieldColors(),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Done,
@@ -144,7 +143,6 @@ private fun ResetPasswordContent(
     val rules = remember(newPassword) { PasswordRules.evaluate(newPassword) }
     val passwordsMatch = newPassword == confirmNewPassword && confirmNewPassword.isNotEmpty()
     val canSubmit = code.length == RESET_CODE_LENGTH && rules.allPassed && passwordsMatch
-    val fieldColors = cosmoTextFieldColors()
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -158,17 +156,16 @@ private fun ResetPasswordContent(
             textAlign = TextAlign.Center,
         )
 
-        OutlinedTextField(
+        CosmoTextField(
             value = code,
             onValueChange = { newValue ->
                 if (newValue.length <= RESET_CODE_LENGTH && newValue.all { it.isDigit() }) {
                     onCodeChange(newValue)
                 }
             },
-            label = { Text("Reset Code") },
-            singleLine = true,
+            label = "Reset Code",
+            placeholder = "123456",
             enabled = !isSubmitting,
-            colors = fieldColors,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
                 imeAction = ImeAction.Next,
@@ -176,13 +173,12 @@ private fun ResetPasswordContent(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        OutlinedTextField(
+        CosmoTextField(
             value = newPassword,
             onValueChange = onNewPasswordChange,
-            label = { Text("New Password") },
-            singleLine = true,
+            label = "New Password",
+            placeholder = "Enter new password",
             enabled = !isSubmitting,
-            colors = fieldColors,
             visualTransformation = if (showPassword) {
                 VisualTransformation.None
             } else {
@@ -212,13 +208,12 @@ private fun ResetPasswordContent(
             PasswordStrengthIndicator(rules = rules)
         }
 
-        OutlinedTextField(
+        CosmoTextField(
             value = confirmNewPassword,
             onValueChange = onConfirmNewPasswordChange,
-            label = { Text("Confirm New Password") },
-            singleLine = true,
+            label = "Confirm New Password",
+            placeholder = "Confirm new password",
             enabled = !isSubmitting,
-            colors = fieldColors,
             visualTransformation = if (showPassword) {
                 VisualTransformation.None
             } else {
@@ -226,7 +221,7 @@ private fun ResetPasswordContent(
             },
             isError = confirmNewPassword.isNotEmpty() && !passwordsMatch,
             supportingText = if (confirmNewPassword.isNotEmpty() && !passwordsMatch) {
-                { Text("Passwords do not match") }
+                "Passwords do not match"
             } else {
                 null
             },

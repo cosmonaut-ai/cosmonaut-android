@@ -11,6 +11,7 @@ import com.cosmonaut.app.data.store.firstData
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+import org.mobilenativefoundation.store.core5.ExperimentalStoreApi
 import org.mobilenativefoundation.store.store5.Store
 import org.mobilenativefoundation.store.store5.StoreReadRequest
 import org.mobilenativefoundation.store.store5.StoreReadResponse
@@ -68,6 +69,11 @@ class NodeRepository @Inject constructor(
      */
     suspend fun invalidate(worldId: String, nodeId: String) {
         store.clear(NodeKey(worldId, nodeId))
+    }
+
+    @OptIn(ExperimentalStoreApi::class)
+    suspend fun clearAll() {
+        store.clear()
     }
 
     /**
