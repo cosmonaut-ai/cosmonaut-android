@@ -82,18 +82,26 @@ fun VoiceSelector(
         onPauseMainAudio()
         mainAudioWasPaused = true
 
-        val player = MediaPlayer().apply {
-            setDataSource(voice.sampleUrl)
-            setOnCompletionListener {
-                playingVoiceId = null
-                mainAudioWasPaused = false
-                onResumeMainAudio()
+        try {
+            val player = MediaPlayer().apply {
+                setDataSource(voice.sampleUrl)
+                setOnCompletionListener {
+                    playingVoiceId = null
+                    mainAudioWasPaused = false
+                    onResumeMainAudio()
+                }
+                setOnErrorListener { _, _, _ ->
+                    stopSample()
+                    true
+                }
+                setOnPreparedListener { it.start() }
+                prepareAsync()
             }
-            setOnPreparedListener { it.start() }
-            prepareAsync()
+            samplePlayer = player
+            playingVoiceId = voice.id
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            stopSample()
         }
-        samplePlayer = player
-        playingVoiceId = voice.id
     }
 
     Column(modifier = modifier.fillMaxWidth()) {

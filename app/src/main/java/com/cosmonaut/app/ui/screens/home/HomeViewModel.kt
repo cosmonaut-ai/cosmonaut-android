@@ -136,7 +136,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isRefreshing = true) }
             try {
-                val response = worldRepository.getWorlds()
+                val response = worldRepository.getWorlds(fresh = true)
                 _uiState.update {
                     it.copy(
                         worlds = response.items.toImmutableList(),

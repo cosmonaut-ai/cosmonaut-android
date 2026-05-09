@@ -31,6 +31,11 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -109,16 +114,28 @@ fun ExpandedPlayer(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Seek slider
-            val seekProgress = if (playbackState.durationMs > 0) {
+            // Seek slider — local dragging state prevents position updates from
+            // snapping the thumb back while the user is actively seeking.
+            var isDragging by remember { mutableStateOf(false) }
+            var dragProgress by remember { mutableFloatStateOf(0f) }
+
+            val liveProgress = if (playbackState.durationMs > 0) {
                 playbackState.currentPositionMs.toFloat() / playbackState.durationMs.toFloat()
             } else {
                 0f
             }
+            val displayProgress = if (isDragging) dragProgress else liveProgress
 
             Slider(
-                value = seekProgress,
-                onValueChange = onSeek,
+                value = displayProgress,
+                onValueChange = { value ->
+                    isDragging = true
+                    dragProgress = value
+                },
+                onValueChangeFinished = {
+                    onSeek(dragProgress)
+                    isDragging = false
+                },
                 enabled = !isGenerating,
                 modifier = Modifier.fillMaxWidth(),
                 colors = SliderDefaults.colors(
@@ -129,12 +146,18 @@ fun ExpandedPlayer(
             )
 
             // Time labels
+            val displayPositionMs = if (isDragging) {
+                (dragProgress * playbackState.durationMs).toLong()
+            } else {
+                playbackState.currentPositionMs
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = if (isGenerating) "0:00" else formatTime(playbackState.currentPositionMs),
+                    text = if (isGenerating) "0:00" else formatTime(displayPositionMs),
                     style = MaterialTheme.typography.labelSmall,
                     color = CosmoTheme.colors.mutedForeground,
                 )

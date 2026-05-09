@@ -8,6 +8,7 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -67,6 +68,7 @@ class AudioPlayerManager @Inject constructor(@param:ApplicationContext private v
     private var player: ExoPlayer? = null
     private var positionUpdateJob: kotlinx.coroutines.Job? = null
     private var pendingTrackInfo: AudioTrackInfo? = null
+    private var controllerFuture: ListenableFuture<MediaController>? = null
 
     private val _playbackState = MutableStateFlow(AudioPlaybackState())
     val playbackState: StateFlow<AudioPlaybackState> = _playbackState.asStateFlow()
@@ -113,6 +115,8 @@ class AudioPlayerManager @Inject constructor(@param:ApplicationContext private v
         player?.removeListener(playerListener)
         player = null
         stopPositionUpdates()
+        controllerFuture?.let { MediaController.releaseFuture(it) }
+        controllerFuture = null
     }
 
     /**
@@ -120,12 +124,15 @@ class AudioPlayerManager @Inject constructor(@param:ApplicationContext private v
      * Called when the user first activates audio narration.
      */
     fun ensureServiceStarted() {
+        if (controllerFuture != null) return
+
         val sessionToken = SessionToken(
             context,
             ComponentName(context, AudioPlaybackService::class.java),
         )
-        val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
-        controllerFuture.addListener(
+        val future = MediaController.Builder(context, sessionToken).buildAsync()
+        controllerFuture = future
+        future.addListener(
             { Timber.d("MediaController connected") },
             MoreExecutors.directExecutor(),
         )

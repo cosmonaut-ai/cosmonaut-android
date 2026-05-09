@@ -127,25 +127,32 @@ private fun CosmoAppContent(
     analytics: CosmoAnalytics,
 ) {
     val authState by authManager.authState.collectAsState()
-    val hasSeenCarousel by preferences.hasSeenCarousel.collectAsState(initial = true)
+    val hasSeenCarousel by preferences.hasSeenCarousel.collectAsState(initial = null)
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         authManager.initialize()
     }
 
-    when (authState) {
-        is AuthState.Unknown, is AuthState.Loading -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = CosmoTheme.colors.primary)
-            }
+    val isReady = authState !is AuthState.Unknown &&
+        authState !is AuthState.Loading &&
+        hasSeenCarousel != null
+
+    if (!isReady) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator(color = CosmoTheme.colors.primary)
         }
+        return
+    }
+
+    when (authState) {
+        is AuthState.Unknown, is AuthState.Loading -> { /* handled above */ }
 
         is AuthState.Unauthenticated -> {
-            val startDestination: CosmoRoute = if (!hasSeenCarousel) {
+            val startDestination: CosmoRoute = if (!hasSeenCarousel!!) {
                 CosmoRoute.OnboardingCarousel
             } else {
                 CosmoRoute.Login
@@ -158,12 +165,22 @@ private fun CosmoAppContent(
         }
 
         is AuthState.Authenticated -> {
-            val hasCompletedOnboarding by preferences.hasCompletedOnboarding.collectAsState(initial = true)
-            AuthenticatedShell(
-                pendingDeepLink = pendingDeepLink,
-                analytics = analytics,
-                hasCompletedOnboarding = hasCompletedOnboarding,
-            )
+            val hasCompletedOnboarding by preferences.hasCompletedOnboarding
+                .collectAsState(initial = null)
+            if (hasCompletedOnboarding == null) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator(color = CosmoTheme.colors.primary)
+                }
+            } else {
+                AuthenticatedShell(
+                    pendingDeepLink = pendingDeepLink,
+                    analytics = analytics,
+                    hasCompletedOnboarding = hasCompletedOnboarding!!,
+                )
+            }
         }
     }
 }
