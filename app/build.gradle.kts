@@ -4,20 +4,14 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
-    alias(libs.plugins.ktlint)
-    alias(libs.plugins.detekt)
     alias(libs.plugins.sentry.android.gradle)
 }
 
-ktlint {
-    android.set(true)
-    outputToConsole.set(true)
-}
-
-detekt {
-    buildUponDefaultConfig = true
-    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
-}
+val versionMajor = 1
+val versionMinor = 0
+val versionPatch = 0
+val computedVersionCode: Int = System.getenv("VERSION_CODE")?.toIntOrNull()
+    ?: (versionMajor * 10000 + versionMinor * 100 + versionPatch)
 
 android {
     namespace = "com.cosmonaut.app"
@@ -27,10 +21,23 @@ android {
         applicationId = "com.cosmonaut.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = computedVersionCode
+        versionName = "$versionMajor.$versionMinor.$versionPatch"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        create("release") {
+            val storeFilePath = System.getenv("SIGNING_STORE_FILE") ?: "release-keystore.jks"
+            val keyStoreFile = file(storeFilePath)
+            if (keyStoreFile.exists()) {
+                storeFile = keyStoreFile
+                storePassword = System.getenv("SIGNING_STORE_PASSWORD") ?: ""
+                keyAlias = System.getenv("SIGNING_KEY_ALIAS") ?: ""
+                keyPassword = System.getenv("SIGNING_KEY_PASSWORD") ?: ""
+            }
+        }
     }
 
     buildFeatures {
@@ -84,9 +91,19 @@ android {
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
+            val releaseConfig = signingConfigs.findByName("release")
+            if (releaseConfig?.storeFile?.exists() == true) {
+                signingConfig = releaseConfig
+            }
         }
+    }
+
+    bundle {
+        language { enableSplit = true }
+        density { enableSplit = true }
+        abi { enableSplit = true }
     }
 
     compileOptions {

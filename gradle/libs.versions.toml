@@ -20,8 +20,6 @@ timber = "5.0.1"
 amplify = "2.34.0"
 browser = "1.9.0"
 desugar-jdk = "2.1.5"
-ktlint = "14.2.0"
-detekt = "2.0.0-alpha.3"
 media3 = "1.6.1"
 play-billing = "7.1.1"
 leakcanary = "2.14"
@@ -120,6 +118,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
-ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
-detekt = { id = "dev.detekt", version.ref = "detekt" }
 sentry-android-gradle = { id = "io.sentry.android.gradle", version.ref = "sentry-gradle-plugin" }

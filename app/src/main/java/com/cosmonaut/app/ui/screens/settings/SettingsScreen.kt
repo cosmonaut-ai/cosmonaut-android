@@ -207,12 +207,21 @@ fun SettingsScreen(
 
         // ── App Version ─────────────────────────────────────────────
         Text(
-            text = "Cosmonaut v${BuildConfig.VERSION_NAME}",
+            text = "Cosmonaut v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
             style = MaterialTheme.typography.bodySmall,
             color = CosmoTheme.colors.mutedForeground,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
         )
+        if (BuildConfig.DEBUG) {
+            Text(
+                text = "${BuildConfig.FLAVOR} \u00B7 ${BuildConfig.BUILD_TYPE}",
+                style = MaterialTheme.typography.labelSmall,
+                color = CosmoTheme.colors.mutedForeground.copy(alpha = 0.5f),
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 
     AnimatedVisibility(

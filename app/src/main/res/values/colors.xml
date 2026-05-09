@@ -6,6 +6,4 @@
     <color name="cosmo_light_background">#FFFFFFFF</color>
     <color name="cosmo_light_primary">#FF4B6CB7</color>
 
-    <!-- Icon colors -->
-    <color name="ic_launcher_background">#FF1A2332</color>
 </resources>
