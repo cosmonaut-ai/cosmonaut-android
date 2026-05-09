@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+
+            <!-- App Links for cosmonaut-ai.com -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="cosmonaut-ai.com"
+                    android:pathPrefix="/worlds" />
+            </intent-filter>
+
+            <!-- App Links for www.cosmonaut-ai.com -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="www.cosmonaut-ai.com"
+                    android:pathPrefix="/worlds" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

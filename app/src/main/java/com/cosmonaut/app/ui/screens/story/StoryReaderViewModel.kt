@@ -377,6 +377,10 @@ class StoryReaderViewModel @Inject constructor(
                 _uiState.value = StoryReaderUiState.Failed(canRetry = true)
             }
             error.isQuotaExceeded -> {
+                val parentId = currentNode?.parentId
+                if (parentId != null) {
+                    _events.send(StoryReaderEvent.NavigateToParent(worldId, parentId))
+                }
                 _events.send(StoryReaderEvent.ShowQuotaPrompt)
             }
             error.isNodeAlreadyProcessed -> {
