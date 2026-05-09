@@ -53,6 +53,7 @@
 -dontwarn com.amplifyframework.**
 -keep class com.amazonaws.** { *; }
 -dontwarn com.amazonaws.**
+-keep class **.R$raw { *; }
 
 # ── Store5 ───────────────────────────────────────────────────────────
 -keep class org.mobilenativefoundation.store.** { *; }

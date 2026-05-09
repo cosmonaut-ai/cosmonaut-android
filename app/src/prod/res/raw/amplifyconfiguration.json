@@ -2,6 +2,9 @@
     "auth": {
         "plugins": {
             "awsCognitoAuthPlugin": {
+                "IdentityManager": {
+                    "Default": {}
+                },
                 "CognitoUserPool": {
                     "Default": {
                         "PoolId": "us-east-2_NE7ZsAjT9",
@@ -11,21 +14,14 @@
                 },
                 "Auth": {
                     "Default": {
-                        "authenticationFlowType": "USER_SRP_AUTH",
-                        "socialProviders": ["GOOGLE"],
-                        "usernameAttributes": ["EMAIL"],
-                        "signupAttributes": ["EMAIL"],
-                        "passwordProtectionSettings": {
-                            "passwordPolicyMinLength": 8,
-                            "passwordPolicyCharacters": ["REQUIRES_LOWERCASE", "REQUIRES_UPPERCASE", "REQUIRES_NUMBERS"]
-                        },
                         "OAuth": {
                             "WebDomain": "cosmonaut-prod.auth.us-east-2.amazoncognito.com",
                             "AppClientId": "127ioqo9dk9hc4n677t8lf9ft6",
                             "SignInRedirectURI": "cosmonaut://callback",
-                            "SignOutRedirectURI": "cosmonaut://",
-                            "Scopes": ["email", "openid", "profile"]
-                        }
+                            "SignOutRedirectURI": "cosmonaut://callback",
+                            "Scopes": ["openid", "email", "profile"]
+                        },
+                        "authenticationFlowType": "USER_SRP_AUTH"
                     }
                 }
             }

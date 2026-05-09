@@ -60,9 +60,14 @@ class WorldRepository @Inject constructor(
         worldStore.stream(StoreReadRequest.cached(WorldKey(worldId, invite), refresh = true))
             .firstData()
 
-    suspend fun getWorlds(cursor: String? = null): PaginatedWorldsResponse =
-        listStore.stream(StoreReadRequest.cached(WorldListKey(cursor), refresh = true))
-            .firstData()
+    suspend fun getWorlds(cursor: String? = null, fresh: Boolean = false): PaginatedWorldsResponse {
+        val request = if (fresh) {
+            StoreReadRequest.fresh(WorldListKey(cursor))
+        } else {
+            StoreReadRequest.cached(WorldListKey(cursor), refresh = true)
+        }
+        return listStore.stream(request).firstData()
+    }
 
     suspend fun getWorldProgress(worldId: String): WorldProgressResponse =
         progressStore.stream(StoreReadRequest.cached(WorldProgressKey(worldId), refresh = true))

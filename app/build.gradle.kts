@@ -30,8 +30,11 @@ android {
     signingConfigs {
         create("release") {
             val storeFilePath = System.getenv("SIGNING_STORE_FILE") ?: "release-keystore.jks"
-            val keyStoreFile = file(storeFilePath)
-            if (keyStoreFile.exists()) {
+            val keyStoreFile = listOf(
+                file(storeFilePath),
+                rootProject.file(storeFilePath),
+            ).firstOrNull { it.exists() }
+            if (keyStoreFile != null) {
                 storeFile = keyStoreFile
                 storePassword = System.getenv("SIGNING_STORE_PASSWORD") ?: ""
                 keyAlias = System.getenv("SIGNING_KEY_ALIAS") ?: ""
