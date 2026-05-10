@@ -426,7 +426,7 @@ class StoryReaderViewModel @Inject constructor(
             loadNode()
         } else if (apiError?.isNodeProcessingConflict == true) {
             try {
-                nodeRepository.retryNodeProcessing(worldId, currentNode!!.id)
+                nodeRepository.retryNodeProcessing(worldId, currentNode?.id ?: nodeId)
                 _events.send(
                     StoryReaderEvent.ShowMessage(
                         "Story node busy — a background task was re-queued. Please try again.",

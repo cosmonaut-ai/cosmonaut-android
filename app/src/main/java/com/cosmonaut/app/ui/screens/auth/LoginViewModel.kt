@@ -114,6 +114,10 @@ class LoginViewModel @Inject constructor(
     fun signUp() {
         val state = _uiState.value
         if (state.email.isBlank() || state.password.isBlank()) return
+        if (state.password != state.confirmPassword) {
+            _uiState.update { it.copy(errorMessage = "Passwords do not match.") }
+            return
+        }
         launchAuth {
             val result = authManager.signUpWithEmail(state.email, state.password)
             analytics.trackEvent(AnalyticsEvent.SignUp(method = "email"))
@@ -195,10 +199,10 @@ class LoginViewModel @Inject constructor(
     // ── Google Sign In ────────────────────────────────────────────────
 
     fun signInWithGoogle(activity: Activity) {
-        analytics.trackEvent(AnalyticsEvent.Login(method = "google"))
         launchAuth {
             val result = authManager.signInWithGoogle(activity)
             if (result.isSignedIn) {
+                analytics.trackEvent(AnalyticsEvent.Login(method = "google"))
                 _events.emit(LoginEvent.NavigateToDashboard)
             }
         }
