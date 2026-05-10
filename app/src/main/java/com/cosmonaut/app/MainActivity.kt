@@ -40,6 +40,7 @@ import com.cosmonaut.app.analytics.TrackScreenViews
 import com.cosmonaut.app.auth.AuthManager
 import com.cosmonaut.app.auth.AuthState
 import com.cosmonaut.app.data.local.CosmoPreferences
+import com.cosmonaut.app.data.repository.UserRepository
 import com.cosmonaut.app.navigation.BottomNavItem
 import com.cosmonaut.app.navigation.CosmoNavHost
 import com.cosmonaut.app.navigation.CosmoRoute
@@ -64,6 +65,8 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var preferences: CosmoPreferences
 
+    @Inject lateinit var userRepository: UserRepository
+
     @Inject lateinit var analytics: CosmoAnalytics
 
     private val _pendingDeepLink = MutableStateFlow<DeepLinkData?>(null)
@@ -86,6 +89,7 @@ class MainActivity : ComponentActivity() {
                 CosmoAppContent(
                     authManager = authManager,
                     preferences = preferences,
+                    userRepository = userRepository,
                     pendingDeepLink = _pendingDeepLink,
                     analytics = analytics,
                 )
@@ -123,6 +127,7 @@ private fun parseWorldDeepLink(uri: Uri): DeepLinkData? {
 private fun CosmoAppContent(
     authManager: AuthManager,
     preferences: CosmoPreferences,
+    userRepository: UserRepository,
     pendingDeepLink: MutableStateFlow<DeepLinkData?>,
     analytics: CosmoAnalytics,
 ) {
@@ -165,22 +170,12 @@ private fun CosmoAppContent(
         }
 
         is AuthState.Authenticated -> {
-            val hasCompletedOnboarding by preferences.hasCompletedOnboarding
-                .collectAsState(initial = null)
-            if (hasCompletedOnboarding == null) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator(color = CosmoTheme.colors.primary)
-                }
-            } else {
-                AuthenticatedShell(
-                    pendingDeepLink = pendingDeepLink,
-                    analytics = analytics,
-                    hasCompletedOnboarding = hasCompletedOnboarding!!,
-                )
-            }
+            AuthenticatedShell(
+                pendingDeepLink = pendingDeepLink,
+                analytics = analytics,
+                userRepository = userRepository,
+                preferences = preferences,
+            )
         }
     }
 }
@@ -211,19 +206,29 @@ private fun UnauthenticatedShell(startDestination: CosmoRoute, onCarouselSeen: (
 private fun AuthenticatedShell(
     pendingDeepLink: MutableStateFlow<DeepLinkData?>,
     analytics: CosmoAnalytics,
-    hasCompletedOnboarding: Boolean,
+    userRepository: UserRepository,
+    preferences: CosmoPreferences,
 ) {
-    val startDestination: CosmoRoute = if (hasCompletedOnboarding) {
-        CosmoRoute.Home
-    } else {
-        CosmoRoute.Onboarding
-    }
     val navController = rememberNavController()
     TrackScreenViews(navController = navController, analytics = analytics)
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val audioViewModel: AudioNarrationViewModel = hiltViewModel()
     val deepLink by pendingDeepLink.collectAsState()
+
+    LaunchedEffect(Unit) {
+        try {
+            val profile = userRepository.fetchFresh()
+            preferences.setOnboardingCompleted(profile.isOnboarded)
+            if (!profile.isOnboarded) {
+                navController.navigate(CosmoRoute.Onboarding) {
+                    popUpTo(CosmoRoute.Home) { inclusive = true }
+                }
+            }
+        } catch (_: Exception) {
+            Timber.d("Failed to fetch user profile for onboarding check")
+        }
+    }
 
     LaunchedEffect(deepLink) {
         val link = deepLink ?: return@LaunchedEffect
@@ -295,7 +300,7 @@ private fun AuthenticatedShell(
     ) { innerPadding ->
         CosmoNavHost(
             navController = navController,
-            startDestination = startDestination,
+            startDestination = CosmoRoute.Home,
             modifier = Modifier.padding(innerPadding),
             audioViewModel = audioViewModel,
         )
