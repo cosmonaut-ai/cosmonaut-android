@@ -38,7 +38,6 @@ data class LoginUiState(
     val showPassword: Boolean = false,
     val isSubmitting: Boolean = false,
     val isSuspended: Boolean = false,
-    val errorMessage: String? = null,
     val successMessage: String? = null,
 )
 
@@ -56,36 +55,36 @@ class LoginViewModel @Inject constructor(
 
     // ── Field Updates ─────────────────────────────────────────────────
 
-    fun updateEmail(value: String) = _uiState.update { it.copy(email = value, errorMessage = null) }
+    fun updateEmail(value: String) = _uiState.update { it.copy(email = value) }
 
-    fun updatePassword(value: String) = _uiState.update { it.copy(password = value, errorMessage = null) }
+    fun updatePassword(value: String) = _uiState.update { it.copy(password = value) }
 
-    fun updateConfirmPassword(value: String) = _uiState.update { it.copy(confirmPassword = value, errorMessage = null) }
+    fun updateConfirmPassword(value: String) = _uiState.update { it.copy(confirmPassword = value) }
 
     fun updateVerificationCode(value: String) =
-        _uiState.update { it.copy(verificationCode = value, errorMessage = null) }
+        _uiState.update { it.copy(verificationCode = value) }
 
-    fun updateNewPassword(value: String) = _uiState.update { it.copy(newPassword = value, errorMessage = null) }
+    fun updateNewPassword(value: String) = _uiState.update { it.copy(newPassword = value) }
 
     fun updateConfirmNewPassword(value: String) =
-        _uiState.update { it.copy(confirmNewPassword = value, errorMessage = null) }
+        _uiState.update { it.copy(confirmNewPassword = value) }
 
-    fun updateResetCode(value: String) = _uiState.update { it.copy(resetCode = value, errorMessage = null) }
+    fun updateResetCode(value: String) = _uiState.update { it.copy(resetCode = value) }
 
     fun togglePasswordVisibility() = _uiState.update { it.copy(showPassword = !it.showPassword) }
 
     // ── View Navigation ───────────────────────────────────────────────
 
     fun switchToSignUp() = _uiState.update {
-        it.copy(view = LoginView.SIGN_UP, errorMessage = null, successMessage = null)
+        it.copy(view = LoginView.SIGN_UP, successMessage = null)
     }
 
     fun switchToSignIn() = _uiState.update {
-        it.copy(view = LoginView.SIGN_IN, errorMessage = null, successMessage = null)
+        it.copy(view = LoginView.SIGN_IN, successMessage = null)
     }
 
     fun switchToForgotPassword() = _uiState.update {
-        it.copy(view = LoginView.FORGOT, errorMessage = null, successMessage = null)
+        it.copy(view = LoginView.FORGOT, successMessage = null)
     }
 
     // ── Sign In ───────────────────────────────────────────────────────
@@ -115,7 +114,7 @@ class LoginViewModel @Inject constructor(
         val state = _uiState.value
         if (state.email.isBlank() || state.password.isBlank()) return
         if (state.password != state.confirmPassword) {
-            _uiState.update { it.copy(errorMessage = "Passwords do not match.") }
+            _events.tryEmit(LoginEvent.ShowMessage("Passwords do not match."))
             return
         }
         launchAuth {
@@ -212,7 +211,7 @@ class LoginViewModel @Inject constructor(
 
     private fun launchAuth(block: suspend () -> Unit) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isSubmitting = true, errorMessage = null) }
+            _uiState.update { it.copy(isSubmitting = true) }
             try {
                 block()
             } catch (@Suppress("TooGenericExceptionCaught") error: Exception) {
@@ -226,17 +225,15 @@ class LoginViewModel @Inject constructor(
                 analytics.trackEvent(AnalyticsEvent.AuthFailed(method = "email", action = action))
                 if (AuthError.isAccountSuspended(error)) {
                     _uiState.update { it.copy(isSuspended = true) }
-                } else {
-                    _uiState.update { it.copy(errorMessage = AuthError.format(error)) }
-
-                    if (AuthError.isSignUpNotConfirmed(error)) {
-                        _uiState.update {
-                            it.copy(
-                                view = LoginView.VERIFY,
-                                successMessage = "Please verify your email first.",
-                            )
-                        }
+                } else if (AuthError.isSignUpNotConfirmed(error)) {
+                    _uiState.update {
+                        it.copy(
+                            view = LoginView.VERIFY,
+                            successMessage = "Please verify your email first.",
+                        )
                     }
+                } else {
+                    _events.emit(LoginEvent.ShowMessage(AuthError.format(error)))
                 }
             } finally {
                 _uiState.update { it.copy(isSubmitting = false) }

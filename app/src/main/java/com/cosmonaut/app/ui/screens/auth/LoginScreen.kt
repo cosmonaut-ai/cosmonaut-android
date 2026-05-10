@@ -136,14 +136,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Messages
-            state.errorMessage?.let { error ->
-                MessageBanner(
-                    text = error,
-                    color = CosmoTheme.colors.destructive,
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
             state.successMessage?.let { message ->
                 MessageBanner(
                     text = message,
@@ -247,8 +239,14 @@ fun LoginScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            SnackbarHost(hostState = snackbarHostState)
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp),
+        )
     }
 }
 

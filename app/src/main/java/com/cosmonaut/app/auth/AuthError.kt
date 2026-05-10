@@ -23,7 +23,8 @@ object AuthError {
         message.contains("InvalidPasswordException", ignoreCase = true) ->
             "Password does not meet requirements. Please use a stronger password."
 
-        message.contains("NotAuthorizedException", ignoreCase = true) ->
+        message.contains("NotAuthorizedException", ignoreCase = true) ||
+            message.contains("not authorized", ignoreCase = true) ->
             "Incorrect email or password."
 
         message.contains("UserNotFoundException", ignoreCase = true) ->
