@@ -210,9 +210,13 @@ dependencies {
 }
 
 sentry {
-    org = "cosmonaut"
-    projectName = "cosmonaut-android"
-    authToken = System.getenv("SENTRY_AUTH_TOKEN")
+    val sentryOrg = System.getenv("SENTRY_ORG")
+    val sentryAuthToken = System.getenv("SENTRY_AUTH_TOKEN")
+    val canUpload = sentryOrg != null && sentryAuthToken != null
+
+    org = sentryOrg ?: ""
+    projectName = System.getenv("SENTRY_PROJECT") ?: "cosmonaut-android"
+    authToken = sentryAuthToken
 
     tracingInstrumentation {
         enabled = true
@@ -223,8 +227,6 @@ sentry {
         )
     }
 
-    autoUploadProguardMapping =
-        System.getenv("SENTRY_AUTH_TOKEN") != null
-    includeSourceContext =
-        System.getenv("SENTRY_AUTH_TOKEN") != null
+    autoUploadProguardMapping = canUpload
+    includeSourceContext = canUpload
 }
