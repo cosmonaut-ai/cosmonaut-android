@@ -39,14 +39,17 @@ class StreamingService @Inject constructor(
     @param:Named("streaming") private val streamingClient: OkHttpClient,
     private val apiService: CosmoApiService,
     private val json: Json,
+    private val streamingSessionManager: StreamingSessionManager,
 ) {
 
     fun generateNodeText(worldId: String, nodeId: String): Flow<StreamEvent> = flow {
-        val baseUrl = BuildConfig.API_BASE_URL.trimEnd('/')
+        val cookieHeader = streamingSessionManager.getCookieHeader()
+        val baseUrl = BuildConfig.STREAMING_BASE_URL.trimEnd('/')
         val url = "$baseUrl/worlds/$worldId/nodes/$nodeId/generate-text"
 
         val request = Request.Builder()
             .url(url)
+            .header("Cookie", cookieHeader)
             .post("".toRequestBody("application/json".toMediaType()))
             .build()
 
@@ -94,7 +97,7 @@ class StreamingService @Inject constructor(
                     currentEventType = line.removePrefix("event:").trim()
                 }
                 line.startsWith("data:") -> {
-                    val data = line.removePrefix("data:").trim()
+                    val data = line.removePrefix("data:").removePrefix(" ")
 
                     if (currentEventType == "error") {
                         emit(StreamEvent.Error(ApiError.fromStreamEvent(data)))
