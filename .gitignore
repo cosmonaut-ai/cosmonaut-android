@@ -39,6 +39,11 @@ captures/
 .DS_Store
 Thumbs.db
 
+# Local verification screenshots
+sc_verify*.png
+screenshot*.png
+screenshots/
+
 # Kotlin
 .kotlin/
 
