@@ -1,6 +1,8 @@
 package com.cosmonaut.app
 
 import android.app.Application
+import android.os.Handler
+import android.os.Looper
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import coil3.disk.DiskCache
@@ -31,8 +33,9 @@ class CosmoApp :
         }
 
         initializeSentry()
-        initializePostHog()
         initializeAmplify()
+
+        Handler(Looper.getMainLooper()).post { initializePostHog() }
 
         Timber.i("Cosmonaut app initialized — env: %s", BuildConfig.BUILD_TYPE)
     }
@@ -56,8 +59,9 @@ class CosmoApp :
                 event
             }
 
+            val breadcrumbLevel = if (BuildConfig.DEBUG) SentryLevel.INFO else SentryLevel.WARNING
             options.addIntegration(
-                SentryTimberIntegration(minEventLevel = SentryLevel.ERROR, minBreadcrumbLevel = SentryLevel.INFO),
+                SentryTimberIntegration(minEventLevel = SentryLevel.ERROR, minBreadcrumbLevel = breadcrumbLevel),
             )
         }
         Timber.i("Sentry initialized")
