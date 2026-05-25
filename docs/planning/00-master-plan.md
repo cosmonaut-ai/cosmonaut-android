@@ -72,7 +72,7 @@
 - Coil image loading configured
 - Logging utility
 - Build variants: `dev` and `prod` product flavors with separate API URLs, Cognito configs, and app IDs (see tech stack doc §7)
-- CI-ready build (linting with ktlint/detekt, debug/release build types)
+- CI-ready build (Android Lint, debug/release build types)
 - Basic app icon and splash screen (Android 12+ splash API)
 
 ### Key Decisions
@@ -666,4 +666,3 @@ Stage 13 (Launch) — after all other stages
 - **Parity**: All critical web features available in Android app
 - **Performance**: <1s cold start, 60fps UI, smooth SSE streaming
 - **Accessibility**: TalkBack fully functional, WCAG 2.1 AA compliance
-

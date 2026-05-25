@@ -23,14 +23,12 @@ All Gradle commands below assume you are in the `cosmonaut-android/` directory.
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-./gradlew ktlintCheck detekt lintDevDebug assembleDevDebug
+./gradlew app:lintDevDebug app:assembleDevDebug
 ```
 
 This runs, in order:
-1. **ktlint** — Kotlin code style enforcement
-2. **detekt** — Kotlin static analysis (complexity, naming, magic numbers, etc.)
-3. **Android Lint** — Android-specific correctness, accessibility, performance checks
-4. **Compile** — Full dev debug APK assembly
+1. **Android Lint** — Android-specific correctness, accessibility, performance checks
+2. **Compile** — Full dev debug APK assembly
 
 **If any step fails, fix the issue and re-run before considering the change complete.**
 
@@ -96,33 +94,14 @@ When examining screenshots:
 ./gradlew compileDevDebugKotlin
 ```
 
-### Auto-format ktlint issues
-
-```bash
-./gradlew ktlintFormat
-```
-
-This fixes most style issues automatically. One exception: filename mismatches (e.g. file named `Foo.kt` containing `class Bar`) must be fixed manually by renaming the file.
-
 ## Linting Tools
 
 | Tool | Version | Command | What it checks |
 |------|---------|---------|----------------|
-| **ktlint** | 14.2.0 | `./gradlew ktlintCheck` | Code style, formatting, import ordering |
-| **detekt** | 2.0.0-alpha.3 | `./gradlew detekt` | Static analysis, complexity, naming, code smells |
-| **Android Lint** | Built into AGP 9.2 | `./gradlew lintDevDebug` | Android correctness, accessibility, performance |
+| **Android Lint** | Built into AGP | `./gradlew app:lintDevDebug` | Android correctness, accessibility, performance |
+| **Gradle assemble** | Project wrapper | `./gradlew app:assembleDevDebug` | Compiles and packages the dev debug APK |
 
-### ktlint configuration
-- Config: `.editorconfig` at project root
-- Style: `android_studio`
-- Compose function naming rule is disabled (Composables use PascalCase)
-- Wildcard imports and trailing commas are allowed
-
-### detekt configuration
-- Config: `config/detekt/detekt.yml`
-- Compose-aware: `@Composable` annotated functions are excluded from naming/parameter rules
-- Hilt modules excluded from TooManyFunctions
-- Magic numbers allowed in property declarations, local variables, enums, ranges, and `@Composable` functions
+ktlint and detekt are not currently configured in this repository. Do not document or rely on `ktlintCheck`, `ktlintFormat`, or `detekt` unless those Gradle tasks are added first.
 
 ## Project Structure
 
@@ -149,8 +128,7 @@ cosmonaut-android/
 │       └── main/res/             # Shared resources (strings, colors, themes, icons, font)
 ├── build.gradle.kts              # Root build file (plugin declarations)
 ├── gradle/libs.versions.toml     # Version catalog (ALL dependency versions)
-├── config/detekt/detekt.yml      # detekt rules
-├── .editorconfig                 # ktlint style config
+├── .editorconfig                 # Editor formatting defaults
 └── docs/planning/                # Architecture & planning docs
 ```
 
@@ -164,7 +142,7 @@ cosmonaut-android/
 - **Type-safe navigation** using `@Serializable` route objects in `CosmoRoute`
 
 ### Naming
-- Files must be named after their single top-level class/interface (ktlint enforces this)
+- Prefer one top-level public class/interface per file and name the file after it
 - Composable functions use PascalCase (e.g. `CosmoTopAppBar`)
 - Package: `com.cosmonaut.app`
 - Build config fields accessed via `BuildConfig.FIELD_NAME`
@@ -195,7 +173,6 @@ Before implementing any stage, read the relevant planning docs:
 ## CI/CD
 
 GitHub Actions workflow at `.github/workflows/android-ci.yml`:
-- **Lint job**: ktlint → detekt → Android Lint
-- **Build Dev**: assembleDevDebug (APK artifact)
-- **Build Prod**: bundleProdRelease (AAB artifact, main branch only, needs signing secrets)
-- **Unit Tests**: testDevDebugUnitTest
+- **Build Dev**: `assembleDevDebug` on `develop`
+- **Build Prod**: `bundleProdRelease` and `assembleProdRelease` on `main`, using signing secrets when available
+- **Artifacts**: uploaded only while the repository is private
