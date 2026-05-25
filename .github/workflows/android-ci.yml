@@ -37,6 +37,8 @@ jobs:
       - name: Build dev debug APK
         env:
           VERSION_CODE: ${{ github.run_number }}
+          POSTHOG_API_KEY: ${{ vars.PUBLIC_POSTHOG_PROJECT_TOKEN }}
+          POSTHOG_HOST: ${{ vars.PUBLIC_POSTHOG_HOST }}
         run: ./gradlew assembleDevDebug
 
       - name: Upload dev debug APK
@@ -80,6 +82,8 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          POSTHOG_API_KEY: ${{ vars.PUBLIC_POSTHOG_PROJECT_TOKEN }}
+          POSTHOG_HOST: ${{ vars.PUBLIC_POSTHOG_HOST }}
         run: ./gradlew bundleProdRelease assembleProdRelease
 
       - name: Upload prod AAB

@@ -12,6 +12,11 @@ val versionMinor = 0
 val versionPatch = 0
 val computedVersionCode: Int = System.getenv("VERSION_CODE")?.toIntOrNull()
     ?: (versionMajor * 10000 + versionMinor * 100 + versionPatch)
+val posthogApiKey = System.getenv("POSTHOG_API_KEY").orEmpty()
+val posthogHost = System.getenv("POSTHOG_HOST").orEmpty()
+
+fun buildConfigString(value: String): String =
+    "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
 android {
     namespace = "com.cosmonaut.app"
@@ -64,8 +69,8 @@ android {
             buildConfigField("String", "COGNITO_REDIRECT_URI", "\"cosmonaut.dev://callback\"")
             buildConfigField("String", "AWS_REGION", "\"us-east-2\"")
             buildConfigField("String", "SENTRY_DSN", "\"https://a737601da6d420d0745431649af5b18d@o4511032796905472.ingest.us.sentry.io/4511032822792192\"")
-            buildConfigField("String", "POSTHOG_API_KEY", "\"REDACTED_PUBLIC_POSTHOG_TOKEN\"")
-            buildConfigField("String", "POSTHOG_HOST", "\"REDACTED_PUBLIC_POSTHOG_HOST\"")
+            buildConfigField("String", "POSTHOG_API_KEY", buildConfigString(posthogApiKey))
+            buildConfigField("String", "POSTHOG_HOST", buildConfigString(posthogHost))
         }
         create("prod") {
             dimension = "environment"
@@ -79,8 +84,8 @@ android {
             buildConfigField("String", "COGNITO_REDIRECT_URI", "\"cosmonaut://callback\"")
             buildConfigField("String", "AWS_REGION", "\"us-east-2\"")
             buildConfigField("String", "SENTRY_DSN", "\"https://a737601da6d420d0745431649af5b18d@o4511032796905472.ingest.us.sentry.io/4511032822792192\"")
-            buildConfigField("String", "POSTHOG_API_KEY", "\"REDACTED_PUBLIC_POSTHOG_TOKEN\"")
-            buildConfigField("String", "POSTHOG_HOST", "\"REDACTED_PUBLIC_POSTHOG_HOST\"")
+            buildConfigField("String", "POSTHOG_API_KEY", buildConfigString(posthogApiKey))
+            buildConfigField("String", "POSTHOG_HOST", buildConfigString(posthogHost))
         }
     }
 
