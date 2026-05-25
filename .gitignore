@@ -21,6 +21,9 @@ build/
 
 # Local configuration
 local.properties
+.env
+.env.*
+.envrc
 *.iml
 
 # Android Studio

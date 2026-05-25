@@ -47,6 +47,8 @@ Release builds read signing configuration from environment variables or GitHub A
 - `SIGNING_KEY_PASSWORD`
 - `SIGNING_STORE_PASSWORD`
 - `SIGNING_STORE_FILE`
+- `POSTHOG_API_KEY`
+- `POSTHOG_HOST`
 
 Do not commit keystores, local signing files, generated APKs, or verification screenshots.
 

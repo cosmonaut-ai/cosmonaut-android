@@ -36,11 +36,15 @@ jobs:
       - name: Build dev debug APK
         env:
           VERSION_CODE: ${{ github.run_number }}
+          POSTHOG_API_KEY: ${{ vars.PUBLIC_POSTHOG_PROJECT_TOKEN }}
+          POSTHOG_HOST: ${{ vars.PUBLIC_POSTHOG_HOST }}
         run: ./gradlew assembleDevDebug
 
       - name: Build dev release APK
         env:
           VERSION_CODE: ${{ github.run_number }}
+          POSTHOG_API_KEY: ${{ vars.PUBLIC_POSTHOG_PROJECT_TOKEN }}
+          POSTHOG_HOST: ${{ vars.PUBLIC_POSTHOG_HOST }}
         run: ./gradlew assembleDevRelease
 
       - name: Upload dev debug APK
@@ -52,6 +56,7 @@ jobs:
           retention-days: 30
 
       - name: Upload dev release APK
+        if: github.event.repository.private
         uses: actions/upload-artifact@v4
         with:
           name: app-dev-release
@@ -89,6 +94,10 @@ jobs:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_STORE_FILE: release-keystore.jks
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          POSTHOG_API_KEY: ${{ vars.PUBLIC_POSTHOG_PROJECT_TOKEN }}
+          POSTHOG_HOST: ${{ vars.PUBLIC_POSTHOG_HOST }}
         run: ./gradlew bundleProdRelease
 
       - name: Build prod release APK
@@ -99,6 +108,10 @@ jobs:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_STORE_FILE: release-keystore.jks
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          POSTHOG_API_KEY: ${{ vars.PUBLIC_POSTHOG_PROJECT_TOKEN }}
+          POSTHOG_HOST: ${{ vars.PUBLIC_POSTHOG_HOST }}
         run: ./gradlew assembleProdRelease
 
       - name: Upload prod AAB
