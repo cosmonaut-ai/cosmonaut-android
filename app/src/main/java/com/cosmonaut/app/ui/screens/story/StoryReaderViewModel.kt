@@ -16,8 +16,8 @@ import com.cosmonaut.app.data.remote.dto.StoryNodeResponse
 import com.cosmonaut.app.data.remote.dto.UsageResponse
 import com.cosmonaut.app.data.remote.dto.WorldResponse
 import com.cosmonaut.app.data.repository.NodeRepository
+import com.cosmonaut.app.data.repository.SessionRepository
 import com.cosmonaut.app.data.repository.UserRepository
-import com.cosmonaut.app.data.repository.WorldRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
@@ -47,14 +47,14 @@ sealed interface StoryReaderUiState {
 
     data class Failed(val canRetry: Boolean) : StoryReaderUiState
 
-    data class WrongSession(val worldId: String) : StoryReaderUiState
+    data class WrongSession(val sessionId: String) : StoryReaderUiState
 
     data class Error(val message: String) : StoryReaderUiState
 }
 
 sealed interface StoryReaderEvent {
-    data class NavigateToNode(val worldId: String, val nodeId: String) : StoryReaderEvent
-    data class NavigateToParent(val worldId: String, val nodeId: String) : StoryReaderEvent
+    data class NavigateToNode(val sessionId: String, val nodeId: String) : StoryReaderEvent
+    data class NavigateToParent(val sessionId: String, val nodeId: String) : StoryReaderEvent
     data object NavigateToDashboard : StoryReaderEvent
     data class ShowMessage(val message: String) : StoryReaderEvent
     data object ShowQuotaPrompt : StoryReaderEvent
@@ -64,14 +64,14 @@ sealed interface StoryReaderEvent {
 class StoryReaderViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val nodeRepository: NodeRepository,
+    private val sessionRepository: SessionRepository,
     private val userRepository: UserRepository,
-    private val worldRepository: WorldRepository,
     private val authManager: AuthManager,
     private val analytics: CosmoAnalytics,
     val regionDetector: RegionDetector,
 ) : ViewModel() {
 
-    val worldId: String = checkNotNull(savedStateHandle["worldId"])
+    val sessionId: String = checkNotNull(savedStateHandle["sessionId"])
     val nodeId: String = checkNotNull(savedStateHandle["nodeId"])
 
     val currentUserId: String?
@@ -98,10 +98,18 @@ class StoryReaderViewModel @Inject constructor(
     private var streamingJob: Job? = null
     private var pollingJob: Job? = null
     private var currentNode: StoryNodeResponse? = null
+    private var rootWorldId: String? = null
 
     init {
         loadNode()
         loadUsage()
+    }
+
+    private fun analyticsWorldId(): String = rootWorldId ?: currentNode?.worldId.orEmpty()
+
+    private fun setCurrentNode(node: StoryNodeResponse) {
+        currentNode = node
+        rootWorldId = node.worldId
     }
 
     fun retryGeneration() {
@@ -114,6 +122,7 @@ class StoryReaderViewModel @Inject constructor(
         if (_isChoiceInProgress.value) return
         _isChoiceInProgress.value = true
 
+        val worldId = analyticsWorldId()
         if (node.parentId == null) {
             analytics.trackEvent(AnalyticsEvent.StoryStarted(worldId = worldId))
         }
@@ -122,15 +131,15 @@ class StoryReaderViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val newNode = nodeRepository.chooseOption(
-                    worldId = worldId,
+                    sessionId = sessionId,
                     nodeId = node.id,
                     targetId = targetId,
                     customChoice = null,
                 )
 
-                nodeRepository.invalidate(worldId, node.id)
+                nodeRepository.invalidate(sessionId, node.id)
 
-                _events.send(StoryReaderEvent.NavigateToNode(worldId, newNode.id))
+                _events.send(StoryReaderEvent.NavigateToNode(sessionId, newNode.id))
                 refreshParentState(node)
             } catch (e: Exception) {
                 handleChoiceError(e)
@@ -147,20 +156,21 @@ class StoryReaderViewModel @Inject constructor(
         if (_isChoiceInProgress.value) return
         _isChoiceInProgress.value = true
 
+        val worldId = analyticsWorldId()
         analytics.trackEvent(AnalyticsEvent.StoryChoiceMade(worldId = worldId, choiceType = "custom"))
 
         viewModelScope.launch {
             try {
                 val newNode = nodeRepository.chooseOption(
-                    worldId = worldId,
+                    sessionId = sessionId,
                     nodeId = node.id,
                     targetId = null,
                     customChoice = text.trim(),
                 )
 
-                nodeRepository.invalidate(worldId, node.id)
+                nodeRepository.invalidate(sessionId, node.id)
 
-                _events.send(StoryReaderEvent.NavigateToNode(worldId, newNode.id))
+                _events.send(StoryReaderEvent.NavigateToNode(sessionId, newNode.id))
                 refreshParentState(node)
             } catch (e: Exception) {
                 handleChoiceError(e)
@@ -177,8 +187,8 @@ class StoryReaderViewModel @Inject constructor(
     private fun refreshParentState(parentNode: StoryNodeResponse) {
         viewModelScope.launch {
             try {
-                val freshParent = nodeRepository.fetchFresh(worldId, parentNode.id)
-                currentNode = freshParent
+                val freshParent = nodeRepository.fetchFresh(sessionId, parentNode.id)
+                setCurrentNode(freshParent)
                 _uiState.value = StoryReaderUiState.Content(
                     node = freshParent,
                     isEnding = freshParent.isEnding,
@@ -197,7 +207,7 @@ class StoryReaderViewModel @Inject constructor(
         cancelStreaming()
         cancelPolling()
         viewModelScope.launch {
-            _events.send(StoryReaderEvent.NavigateToParent(worldId, parentId))
+            _events.send(StoryReaderEvent.NavigateToParent(sessionId, parentId))
         }
     }
 
@@ -210,7 +220,7 @@ class StoryReaderViewModel @Inject constructor(
     fun loadWorldForShare() {
         viewModelScope.launch {
             try {
-                _worldForShare.value = worldRepository.getWorld(worldId)
+                _worldForShare.value = sessionRepository.getSession(sessionId).world
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load world for share")
                 _events.send(StoryReaderEvent.ShowMessage("Failed to load sharing info"))
@@ -225,8 +235,8 @@ class StoryReaderViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = StoryReaderUiState.Loading
             try {
-                val node = nodeRepository.getNode(worldId, nodeId)
-                currentNode = node
+                val node = nodeRepository.getNode(sessionId, nodeId)
+                setCurrentNode(node)
                 _hasParent.value = node.parentId != null
                 handleNodeState(node)
             } catch (e: Exception) {
@@ -242,7 +252,7 @@ class StoryReaderViewModel @Inject constructor(
             node.isCompleted -> {
                 if (node.isEnding) {
                     analytics.trackEvent(
-                        AnalyticsEvent.StoryEnded(worldId = worldId, pathLength = computePathLength(node.id)),
+                        AnalyticsEvent.StoryEnded(worldId = analyticsWorldId(), pathLength = computePathLength(node.id)),
                     )
                 }
                 _uiState.value = StoryReaderUiState.Content(
@@ -282,7 +292,7 @@ class StoryReaderViewModel @Inject constructor(
 
         streamingJob?.cancel()
         streamingJob = viewModelScope.launch {
-            nodeRepository.generateNodeText(worldId, node.id)
+            nodeRepository.generateNodeText(sessionId, node.id)
                 .catch { e -> handleStreamingError(e, node.id) }
                 .collect { event ->
                     when (event) {
@@ -294,14 +304,14 @@ class StoryReaderViewModel @Inject constructor(
                             )
                         }
                         is StreamEvent.Done -> {
-                            currentNode = event.completedNode
+                            setCurrentNode(event.completedNode)
                             _uiState.value = StoryReaderUiState.Content(
                                 node = event.completedNode,
                                 isEnding = event.completedNode.isEnding,
                             )
                         }
                         is StreamEvent.PreGenerated -> {
-                            currentNode = event.node
+                            setCurrentNode(event.node)
                             _uiState.value = StoryReaderUiState.Content(
                                 node = event.node,
                                 isEnding = event.node.isEnding,
@@ -325,9 +335,9 @@ class StoryReaderViewModel @Inject constructor(
                 delay(POLL_INTERVAL_MS)
                 attempts++
                 try {
-                    val freshNode = nodeRepository.getNode(worldId, node.id)
+                    val freshNode = nodeRepository.getNode(sessionId, node.id)
                     if (!freshNode.isGenerating) {
-                        currentNode = freshNode
+                        setCurrentNode(freshNode)
                         handleNodeState(freshNode)
                         return@launch
                     }
@@ -348,8 +358,8 @@ class StoryReaderViewModel @Inject constructor(
         Timber.e(error, "Streaming failed for node $nodeId")
 
         try {
-            val freshNode = nodeRepository.getNode(worldId, nodeId)
-            currentNode = freshNode
+            val freshNode = nodeRepository.getNode(sessionId, nodeId)
+            setCurrentNode(freshNode)
             when {
                 freshNode.isGenerating -> startPolling(freshNode)
                 freshNode.isCompleted && freshNode.text != null -> {
@@ -379,14 +389,14 @@ class StoryReaderViewModel @Inject constructor(
             error.isQuotaExceeded -> {
                 val parentId = currentNode?.parentId
                 if (parentId != null) {
-                    _events.send(StoryReaderEvent.NavigateToParent(worldId, parentId))
+                    _events.send(StoryReaderEvent.NavigateToParent(sessionId, parentId))
                 }
                 _events.send(StoryReaderEvent.ShowQuotaPrompt)
             }
             error.isNodeAlreadyProcessed -> {
                 try {
-                    val freshNode = nodeRepository.getNode(worldId, nodeId)
-                    currentNode = freshNode
+                    val freshNode = nodeRepository.getNode(sessionId, nodeId)
+                    setCurrentNode(freshNode)
                     handleNodeState(freshNode)
                 } catch (_: Exception) {
                     _uiState.value = StoryReaderUiState.Failed(canRetry = true)
@@ -402,7 +412,7 @@ class StoryReaderViewModel @Inject constructor(
         if (error is ApiError) {
             when {
                 error.isWrongSession -> {
-                    _uiState.value = StoryReaderUiState.WrongSession(worldId)
+                    _uiState.value = StoryReaderUiState.WrongSession(sessionId)
                 }
                 error.isNotFound -> {
                     _uiState.value = StoryReaderUiState.Error("Story node not found.")
@@ -426,7 +436,7 @@ class StoryReaderViewModel @Inject constructor(
             loadNode()
         } else if (apiError?.isNodeProcessingConflict == true) {
             try {
-                nodeRepository.retryNodeProcessing(worldId, currentNode?.id ?: nodeId)
+                nodeRepository.retryNodeProcessing(sessionId, currentNode?.id ?: nodeId)
                 _events.send(
                     StoryReaderEvent.ShowMessage(
                         "Story node busy — a background task was re-queued. Please try again.",

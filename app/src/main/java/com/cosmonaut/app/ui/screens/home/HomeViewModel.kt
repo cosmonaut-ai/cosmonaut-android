@@ -6,8 +6,9 @@ import com.cosmonaut.app.analytics.AnalyticsEvent
 import com.cosmonaut.app.analytics.CosmoAnalytics
 import com.cosmonaut.app.data.billing.RegionDetector
 import com.cosmonaut.app.data.remote.dto.UsageResponse
-import com.cosmonaut.app.data.remote.dto.WorldProgressResponse
 import com.cosmonaut.app.data.remote.dto.WorldResponse
+import com.cosmonaut.app.data.remote.dto.WorldSessionSummaryResponse
+import com.cosmonaut.app.data.repository.SessionRepository
 import com.cosmonaut.app.data.repository.UserRepository
 import com.cosmonaut.app.data.repository.WorldRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,7 +26,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 data class HomeUiState(
-    val worlds: ImmutableList<WorldResponse> = persistentListOf(),
+    val sessions: ImmutableList<WorldSessionSummaryResponse> = persistentListOf(),
     val featuredWorlds: ImmutableList<WorldResponse> = persistentListOf(),
     val isLoading: Boolean = true,
     val isLoadingFeatured: Boolean = true,
@@ -34,20 +35,22 @@ data class HomeUiState(
     val error: String? = null,
     val nextCursor: String? = null,
     val hasMore: Boolean = true,
-    val worldToDelete: WorldResponse? = null,
+    val sessionToDelete: WorldSessionSummaryResponse? = null,
     val worldsAtLimit: Boolean = false,
     val usage: UsageResponse? = null,
 )
 
 sealed interface HomeEvent {
     data class NavigateToWorld(val worldId: String) : HomeEvent
-    data class NavigateToStoryNode(val worldId: String, val nodeId: String) : HomeEvent
+    data class NavigateToSession(val sessionId: String) : HomeEvent
+    data class NavigateToStoryNode(val sessionId: String, val nodeId: String) : HomeEvent
     data class ShowMessage(val message: String) : HomeEvent
 }
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val worldRepository: WorldRepository,
+    private val sessionRepository: SessionRepository,
     private val userRepository: UserRepository,
     private val analytics: CosmoAnalytics,
     val regionDetector: RegionDetector,
@@ -60,27 +63,27 @@ class HomeViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     init {
-        loadWorlds()
+        loadSessions()
         loadFeaturedWorlds()
         checkUsageLimits()
         viewModelScope.launch { regionDetector.detect() }
     }
 
-    fun loadWorlds() {
+    fun loadSessions() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val response = worldRepository.getWorlds()
+                val response = sessionRepository.getSessions()
                 _uiState.update {
                     it.copy(
-                        worlds = response.items.toImmutableList(),
+                        sessions = response.items.toImmutableList(),
                         isLoading = false,
                         nextCursor = response.nextCursor,
                         hasMore = response.nextCursor != null,
                     )
                 }
             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-                Timber.e(e, "Failed to load worlds")
+                Timber.e(e, "Failed to load sessions")
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -116,17 +119,17 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingMore = true) }
             try {
-                val response = worldRepository.getWorlds(cursor)
+                val response = sessionRepository.getSessions(cursor)
                 _uiState.update {
                     it.copy(
-                        worlds = (it.worlds + response.items).toImmutableList(),
+                        sessions = (it.sessions + response.items).toImmutableList(),
                         isLoadingMore = false,
                         nextCursor = response.nextCursor,
                         hasMore = response.nextCursor != null,
                     )
                 }
             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-                Timber.e(e, "Failed to load more worlds")
+                Timber.e(e, "Failed to load more sessions")
                 _uiState.update { it.copy(isLoadingMore = false) }
             }
         }
@@ -136,10 +139,10 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isRefreshing = true) }
             try {
-                val response = worldRepository.getWorlds(fresh = true)
+                val response = sessionRepository.getSessions(fresh = true)
                 _uiState.update {
                     it.copy(
-                        worlds = response.items.toImmutableList(),
+                        sessions = response.items.toImmutableList(),
                         isRefreshing = false,
                         nextCursor = response.nextCursor,
                         hasMore = response.nextCursor != null,
@@ -156,48 +159,42 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun onWorldClick(world: WorldResponse) {
+    fun onSessionClick(session: WorldSessionSummaryResponse) {
         viewModelScope.launch {
-            _events.send(HomeEvent.NavigateToWorld(world.id))
+            _events.send(HomeEvent.NavigateToSession(session.id))
         }
     }
 
-    fun onPlayClick(world: WorldResponse) {
+    fun onPlayClick(session: WorldSessionSummaryResponse) {
         viewModelScope.launch {
-            try {
-                val progress: WorldProgressResponse = worldRepository.getWorldProgress(world.id)
-                val nodeId = progress.currentNodeId ?: world.rootNodeId
-                if (nodeId != null) {
-                    _events.send(HomeEvent.NavigateToStoryNode(world.id, nodeId))
-                } else {
-                    _events.send(HomeEvent.NavigateToWorld(world.id))
-                }
-            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-                Timber.e(e, "Failed to get world progress")
-                _events.send(HomeEvent.NavigateToWorld(world.id))
+            val nodeId = session.lastVisitedNodeId ?: session.world.rootNodeId
+            if (nodeId != null) {
+                _events.send(HomeEvent.NavigateToStoryNode(session.id, nodeId))
+            } else {
+                _events.send(HomeEvent.NavigateToSession(session.id))
             }
         }
     }
 
-    fun requestDelete(world: WorldResponse) {
-        _uiState.update { it.copy(worldToDelete = world) }
+    fun requestDelete(session: WorldSessionSummaryResponse) {
+        _uiState.update { it.copy(sessionToDelete = session) }
     }
 
     fun cancelDelete() {
-        _uiState.update { it.copy(worldToDelete = null) }
+        _uiState.update { it.copy(sessionToDelete = null) }
     }
 
     fun confirmDelete() {
-        val world = _uiState.value.worldToDelete ?: return
-        _uiState.update { it.copy(worldToDelete = null) }
+        val session = _uiState.value.sessionToDelete ?: return
+        _uiState.update { it.copy(sessionToDelete = null) }
 
         viewModelScope.launch {
             try {
-                worldRepository.deleteWorld(world.id)
+                sessionRepository.deleteSession(session.id)
                 _uiState.update { state ->
-                    state.copy(worlds = state.worlds.filter { it.id != world.id }.toImmutableList())
+                    state.copy(sessions = state.sessions.filter { it.id != session.id }.toImmutableList())
                 }
-                _events.send(HomeEvent.ShowMessage("\"${world.title ?: "Story"}\" deleted"))
+                _events.send(HomeEvent.ShowMessage("\"${session.world.title ?: "Story"}\" removed"))
                 checkUsageLimits()
             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                 Timber.e(e, "Failed to delete world")

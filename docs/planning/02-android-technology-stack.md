@@ -277,7 +277,7 @@ When audio narration is active, a mini-player bar sits **between the page conten
 - **Predictive back gestures**: system back animation support
 - **Dynamic color**: Material You color theming from device wallpaper (with Cosmonaut brand override option)
 - **Haptic feedback**: subtle vibration on choice selection, world creation
-- **Deep links**: `cosmonaut-ai.com/worlds/[id]` opens directly in app
+- **Deep links**: `/worlds/[id]` and `/sessions/[id]` open directly in app
 - **Share intents**: native Android share sheet for world links
 - **Push notifications**: optional notifications for world generation completion (via FCM)
 

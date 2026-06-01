@@ -139,8 +139,11 @@ fun CosmoNavHost(
                 onNavigateToWorld = { worldId ->
                     navController.navigate(CosmoRoute.WorldHome(worldId))
                 },
-                onNavigateToStoryNode = { worldId, nodeId ->
-                    navController.navigate(CosmoRoute.StoryNode(worldId, nodeId))
+                onNavigateToSession = { sessionId ->
+                    navController.navigate(CosmoRoute.SessionHome(sessionId))
+                },
+                onNavigateToStoryNode = { sessionId, nodeId ->
+                    navController.navigate(CosmoRoute.StoryNode(sessionId, nodeId))
                 },
                 onNavigateToCreate = {
                     navController.navigate(CosmoRoute.Create) {
@@ -157,8 +160,8 @@ fun CosmoNavHost(
             popExitTransition = { bottomNavExit() },
         ) {
             CreateScreen(
-                onNavigateToWorld = { worldId ->
-                    navController.navigate(CosmoRoute.WorldHome(worldId)) {
+                onNavigateToSession = { sessionId ->
+                    navController.navigate(CosmoRoute.SessionHome(sessionId)) {
                         popUpTo<CosmoRoute.Home>()
                     }
                 },
@@ -188,14 +191,38 @@ fun CosmoNavHost(
 
         composable<CosmoRoute.WorldHome> {
             WorldHomeScreen(
-                onNavigateToStoryNode = { worldId, nodeId ->
-                    navController.navigate(CosmoRoute.StoryNode(worldId, nodeId))
+                onNavigateToStoryNode = { sessionId, nodeId ->
+                    navController.navigate(CosmoRoute.StoryNode(sessionId, nodeId))
                 },
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onNavigateToMap = { worldId ->
-                    navController.navigate(CosmoRoute.StoryMap(worldId))
+                onNavigateToMap = { sessionId ->
+                    navController.navigate(CosmoRoute.StoryMap(sessionId))
+                },
+                onNavigateToWorld = { worldId ->
+                    navController.navigate(CosmoRoute.WorldHome(worldId)) {
+                        popUpTo<CosmoRoute.SessionHome> { inclusive = true }
+                    }
+                },
+            )
+        }
+
+        composable<CosmoRoute.SessionHome> {
+            WorldHomeScreen(
+                onNavigateToStoryNode = { sessionId, nodeId ->
+                    navController.navigate(CosmoRoute.StoryNode(sessionId, nodeId))
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToMap = { sessionId ->
+                    navController.navigate(CosmoRoute.StoryMap(sessionId))
+                },
+                onNavigateToWorld = { worldId ->
+                    navController.navigate(CosmoRoute.WorldHome(worldId)) {
+                        popUpTo<CosmoRoute.SessionHome> { inclusive = true }
+                    }
                 },
             )
         }
@@ -229,13 +256,13 @@ fun CosmoNavHost(
             },
         ) {
             StoryReaderScreen(
-                onNavigateToNode = { worldId, nodeId ->
+                onNavigateToNode = { sessionId, nodeId ->
                     storyNodeDirection = StoryNodeDirection.FORWARD
-                    navController.navigate(CosmoRoute.StoryNode(worldId, nodeId))
+                    navController.navigate(CosmoRoute.StoryNode(sessionId, nodeId))
                 },
-                onNavigateToParent = { worldId, nodeId ->
+                onNavigateToParent = { sessionId, nodeId ->
                     storyNodeDirection = StoryNodeDirection.BACKWARD
-                    navController.navigate(CosmoRoute.StoryNode(worldId, nodeId)) {
+                    navController.navigate(CosmoRoute.StoryNode(sessionId, nodeId)) {
                         popUpTo<CosmoRoute.StoryNode> { inclusive = true }
                     }
                 },
@@ -245,9 +272,9 @@ fun CosmoNavHost(
                         popUpTo<CosmoRoute.Home> { inclusive = true }
                     }
                 },
-                onNavigateToMap = { worldId, currentNodeId ->
+                onNavigateToMap = { sessionId, currentNodeId ->
                     storyNodeDirection = StoryNodeDirection.FORWARD
-                    navController.navigate(CosmoRoute.StoryMap(worldId, currentNodeId))
+                    navController.navigate(CosmoRoute.StoryMap(sessionId, currentNodeId))
                 },
                 audioViewModel = audioViewModel,
             )
@@ -255,9 +282,9 @@ fun CosmoNavHost(
 
         composable<CosmoRoute.StoryMap> {
             StoryMapScreen(
-                onNavigateToNode = { worldId, nodeId ->
+                onNavigateToNode = { sessionId, nodeId ->
                     storyNodeDirection = StoryNodeDirection.FORWARD
-                    navController.navigate(CosmoRoute.StoryNode(worldId, nodeId))
+                    navController.navigate(CosmoRoute.StoryNode(sessionId, nodeId))
                 },
                 onNavigateBack = {
                     navController.popBackStack()

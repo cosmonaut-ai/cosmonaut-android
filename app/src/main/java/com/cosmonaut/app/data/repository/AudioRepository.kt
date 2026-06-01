@@ -34,9 +34,9 @@ class AudioRepository @Inject constructor(
      * Generate audio narration for a node with a specific voice.
      * Idempotent: returns the cached CDN URL if audio was already generated.
      */
-    suspend fun generateNodeAudio(worldId: String, nodeId: String, voiceId: String,): GenerateAudioResponse =
+    suspend fun generateNodeAudio(sessionId: String, nodeId: String, voiceId: String,): GenerateAudioResponse =
         apiService.generateNodeAudio(
-            worldId = worldId,
+            sessionId = sessionId,
             nodeId = nodeId,
             request = GenerateAudioRequest(voiceId = voiceId),
         )

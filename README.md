@@ -21,6 +21,15 @@ Cosmonaut is split across several public repositories:
 - Store5 planning for cache/source-of-truth patterns
 - Sentry crash reporting and PostHog product analytics
 
+## World And Session Model
+
+Android mirrors the current public API split:
+
+- Root world routes (`WorldHome`) use `/worlds/{worldId}` for canonical/shareable metadata and invite links.
+- Session routes (`SessionHome`, `StoryNode`, `StoryMap`) use `/sessions/{sessionId}` for the current user's saved playthrough, progress, node state, text streaming, and audio.
+- Creating a world returns both the root world and the owner's first session, so the create flow navigates to the returned session.
+- Shared session links are accepted as deep links; inaccessible sessions are handed off to the root world when the backend says the viewer can read it.
+
 ## Local Setup
 
 Prerequisites:
@@ -67,6 +76,7 @@ Release builds read signing configuration from environment variables or GitHub A
 - `SIGNING_KEY_PASSWORD`
 - `SIGNING_STORE_PASSWORD`
 - `SIGNING_STORE_FILE`
+- `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`
 - `SENTRY_AUTH_TOKEN`
 - `SENTRY_ORG`
 - `SENTRY_PROJECT`
@@ -91,7 +101,7 @@ Start with [`docs/README.md`](docs/README.md). The most useful references are:
 
 ## CI/CD
 
-GitHub Actions builds dev APKs from `develop` and production release artifacts from `main`. Artifact upload is disabled when the repository is public.
+GitHub Actions builds dev APKs from `develop`. Pushes to `main` build signed production artifacts and publish the production AAB to the Google Play internal testing track when Play Console secrets are configured. Artifact upload is disabled when the repository is public. See [`docs/play-store-release-automation.md`](docs/play-store-release-automation.md).
 
 ## Security
 

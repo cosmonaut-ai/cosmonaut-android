@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.cosmonaut.app.analytics.AnalyticsEvent
 import com.cosmonaut.app.analytics.CosmoAnalytics
 import com.cosmonaut.app.data.repository.NodeRepository
-import com.cosmonaut.app.data.repository.WorldRepository
+import com.cosmonaut.app.data.repository.SessionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,11 +26,12 @@ sealed interface StoryMapUiState {
 class StoryMapViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val nodeRepository: NodeRepository,
-    private val worldRepository: WorldRepository,
+    private val sessionRepository: SessionRepository,
     private val analytics: CosmoAnalytics,
 ) : ViewModel() {
 
-    val worldId: String = checkNotNull(savedStateHandle["worldId"])
+    val sessionId: String = checkNotNull(savedStateHandle["sessionId"])
+    private var rootWorldId: String? = null
 
     /**
      * The node ID that was active when the user opened the map.
@@ -44,7 +45,6 @@ class StoryMapViewModel @Inject constructor(
     val uiState: StateFlow<StoryMapUiState> = _uiState.asStateFlow()
 
     init {
-        analytics.trackEvent(AnalyticsEvent.MapViewed(worldId = worldId))
         loadNodes()
     }
 
@@ -52,18 +52,23 @@ class StoryMapViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = StoryMapUiState.Loading
             try {
-                val nodes = nodeRepository.getWorldNodes(worldId)
+                val nodes = nodeRepository.getSessionNodes(sessionId)
+                rootWorldId = nodes.firstOrNull()?.worldId ?: rootWorldId
 
                 if (nodes.isEmpty()) {
                     val rootNodeId = try {
-                        worldRepository.getWorld(worldId).rootNodeId
+                        val session = sessionRepository.getSession(sessionId)
+                        rootWorldId = session.rootWorldId
+                        session.world.rootNodeId
                     } catch (e: Exception) {
                         null
                     }
+                    analytics.trackEvent(AnalyticsEvent.MapViewed(worldId = rootWorldId.orEmpty()))
                     _uiState.value = StoryMapUiState.Empty(rootNodeId)
                     return@launch
                 }
 
+                analytics.trackEvent(AnalyticsEvent.MapViewed(worldId = rootWorldId.orEmpty()))
                 val graphData = GraphLayoutEngine.layout(nodes, currentNodeId)
                 _uiState.value = StoryMapUiState.Success(
                     graphData = graphData,

@@ -65,7 +65,7 @@ private const val PROMPT_MIN_LINES = 4
 
 @Composable
 fun CreateScreen(
-    onNavigateToWorld: (String) -> Unit,
+    onNavigateToSession: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CreateViewModel = hiltViewModel(),
 ) {
@@ -77,9 +77,9 @@ fun CreateScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                is CreateEvent.NavigateToWorld -> {
+                is CreateEvent.NavigateToSession -> {
                     CosmoHaptics.onConfirm(view)
-                    onNavigateToWorld(event.worldId)
+                    onNavigateToSession(event.sessionId)
                 }
                 is CreateEvent.ShowMessage -> snackbarHostState.showSnackbar(
                     message = event.message,

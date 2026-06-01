@@ -123,7 +123,8 @@ private const val SPOILER_CARD_WIDTH = 240
 fun WorldHomeScreen(
     onNavigateToStoryNode: (String, String) -> Unit,
     onNavigateBack: () -> Unit,
-    onNavigateToMap: (worldId: String) -> Unit = {},
+    onNavigateToMap: (sessionId: String) -> Unit = {},
+    onNavigateToWorld: (worldId: String) -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: WorldHomeViewModel = hiltViewModel(),
 ) {
@@ -135,8 +136,12 @@ fun WorldHomeScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
+                is WorldHomeEvent.NavigateToWorld ->
+                    onNavigateToWorld(event.worldId)
                 is WorldHomeEvent.NavigateToStoryNode ->
-                    onNavigateToStoryNode(event.worldId, event.nodeId)
+                    onNavigateToStoryNode(event.sessionId, event.nodeId)
+                is WorldHomeEvent.NavigateToMap ->
+                    onNavigateToMap(event.sessionId)
                 is WorldHomeEvent.ShowMessage -> snackbarHostState.showSnackbar(
                     message = event.message,
                     duration = SnackbarDuration.Short,
@@ -166,7 +171,7 @@ fun WorldHomeScreen(
                 currentNodeId = currentState.currentNodeId,
                 onContinue = viewModel::onContinueStory,
                 onBack = onNavigateBack,
-                onViewMap = { onNavigateToMap(currentState.world.id) },
+                onViewMap = viewModel::onViewMap,
                 onShare = { showShareSheet = true },
             )
         }

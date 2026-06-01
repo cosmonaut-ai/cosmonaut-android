@@ -13,6 +13,7 @@ private fun routeToScreenName(route: String?): String? {
     if (route == null) return null
     return when {
         route.contains("WorldHome") -> "World Home"
+        route.contains("SessionHome") -> "Story Home"
         route.contains("StoryNode") -> "Story Reader"
         route.contains("StoryMap") -> "Story Map"
         route.contains("Home") -> "Dashboard"
@@ -41,6 +42,7 @@ fun TrackScreenViews(navController: NavController, analytics: CosmoAnalytics) {
             val properties = buildMap<String, Any> {
                 put("route", routeName ?: "unknown")
                 arguments?.getString("worldId")?.let { put("world_id", it) }
+                arguments?.getString("sessionId")?.let { put("session_id", it) }
                 arguments?.getString("nodeId")?.let { put("node_id", it) }
             }
 

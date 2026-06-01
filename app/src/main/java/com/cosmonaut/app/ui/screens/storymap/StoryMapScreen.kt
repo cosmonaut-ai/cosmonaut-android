@@ -49,7 +49,7 @@ internal const val NODE_HEIGHT_DP = 58f
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StoryMapScreen(
-    onNavigateToNode: (worldId: String, nodeId: String) -> Unit,
+    onNavigateToNode: (sessionId: String, nodeId: String) -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: StoryMapViewModel = hiltViewModel(),
 ) {
@@ -93,7 +93,7 @@ fun StoryMapScreen(
                 is StoryMapUiState.Empty -> EmptyContent(
                     rootNodeId = state.rootNodeId,
                     onEnterStory = { nodeId ->
-                        onNavigateToNode(viewModel.worldId, nodeId)
+                        onNavigateToNode(viewModel.sessionId, nodeId)
                     },
                 )
 
@@ -102,7 +102,7 @@ fun StoryMapScreen(
                         graphData = state.graphData,
                         currentNodeId = state.graphData.nodes.find { it.isCurrent }?.id,
                         onNodeClick = { nodeId ->
-                            onNavigateToNode(viewModel.worldId, nodeId)
+                            onNavigateToNode(viewModel.sessionId, nodeId)
                         },
                     )
 

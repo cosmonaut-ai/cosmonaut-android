@@ -1,12 +1,12 @@
 package com.cosmonaut.app.data.store
 
 import com.cosmonaut.app.data.remote.CosmoApiService
-import com.cosmonaut.app.data.remote.dto.PaginatedWorldsResponse
+import com.cosmonaut.app.data.remote.dto.PaginatedSessionsResponse
 import com.cosmonaut.app.data.remote.dto.StoryNodeResponse
 import com.cosmonaut.app.data.remote.dto.UsageResponse
 import com.cosmonaut.app.data.remote.dto.VoiceResponse
-import com.cosmonaut.app.data.remote.dto.WorldProgressResponse
 import com.cosmonaut.app.data.remote.dto.WorldResponse
+import com.cosmonaut.app.data.remote.dto.WorldSessionResponse
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,11 +31,11 @@ annotation class WorldDetailStore
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class WorldListStore
+annotation class SessionDetailStore
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class WorldProgressStore
+annotation class SessionListStore
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
@@ -68,7 +68,7 @@ object StoreModule {
     @NodeStore
     fun provideNodeStore(api: CosmoApiService): Store<NodeKey, StoryNodeResponse> = StoreBuilder.from(
         fetcher = Fetcher.of { key: NodeKey ->
-            api.getNode(key.worldId, key.nodeId)
+            api.getNode(key.sessionId, key.nodeId)
         },
     )
         .validator(
@@ -111,31 +111,38 @@ object StoreModule {
 
     @Provides
     @Singleton
-    @WorldListStore
-    fun provideWorldListStore(api: CosmoApiService): Store<WorldListKey, PaginatedWorldsResponse> = StoreBuilder.from(
-        fetcher = Fetcher.of { key: WorldListKey ->
-            api.getWorlds(key.cursor)
+    @SessionDetailStore
+    fun provideSessionDetailStore(api: CosmoApiService): Store<SessionKey, WorldSessionResponse> = StoreBuilder.from(
+        fetcher = Fetcher.of { key: SessionKey ->
+            api.getSession(key.sessionId)
         },
     )
+        .validator(
+            Validator.by { session: WorldSessionResponse ->
+                if (!session.world.isCompleted) return@by false
+                val age = System.currentTimeMillis() - session.fetchedAtMs
+                age < WORLD_STALE_MS
+            },
+        )
         .cachePolicy(
-            MemoryPolicy.builder<WorldListKey, PaginatedWorldsResponse>()
-                .setMaxSize(20)
-                .setExpireAfterAccess(5.minutes)
+            MemoryPolicy.builder<SessionKey, WorldSessionResponse>()
+                .setMaxSize(50)
+                .setExpireAfterAccess(10.minutes)
                 .build(),
         )
         .build()
 
     @Provides
     @Singleton
-    @WorldProgressStore
-    fun provideWorldProgressStore(api: CosmoApiService,): Store<WorldProgressKey, WorldProgressResponse> =
+    @SessionListStore
+    fun provideSessionListStore(api: CosmoApiService): Store<SessionListKey, PaginatedSessionsResponse> =
         StoreBuilder.from(
-            fetcher = Fetcher.of { key: WorldProgressKey ->
-                api.getWorldProgress(key.worldId)
+            fetcher = Fetcher.of { key: SessionListKey ->
+                api.getSessions(key.cursor)
             },
         )
             .cachePolicy(
-                MemoryPolicy.builder<WorldProgressKey, WorldProgressResponse>()
+                MemoryPolicy.builder<SessionListKey, PaginatedSessionsResponse>()
                     .setMaxSize(20)
                     .setExpireAfterAccess(5.minutes)
                     .build(),

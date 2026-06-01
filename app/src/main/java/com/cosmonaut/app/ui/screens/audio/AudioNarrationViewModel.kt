@@ -65,6 +65,7 @@ class AudioNarrationViewModel @Inject constructor(
     val events: StateFlow<AudioNarrationEvent?> = _events.asStateFlow()
 
     // Current node context
+    private var currentSessionId: String? = null
     private var currentWorldId: String? = null
     private var currentNodeId: String? = null
     private var currentNodeTitle: String? = null
@@ -103,6 +104,7 @@ class AudioNarrationViewModel @Inject constructor(
      * Update the current node context. Called by StoryReaderScreen when node data loads.
      */
     fun setNodeContext(
+        sessionId: String,
         worldId: String,
         nodeId: String,
         nodeTitle: String?,
@@ -112,6 +114,7 @@ class AudioNarrationViewModel @Inject constructor(
     ) {
         val nodeChanged = currentNodeId != nodeId
 
+        currentSessionId = sessionId
         currentWorldId = worldId
         currentNodeId = nodeId
         currentNodeTitle = nodeTitle
@@ -199,14 +202,14 @@ class AudioNarrationViewModel @Inject constructor(
     }
 
     private fun generateForVoice(voiceId: String) {
-        val worldId = currentWorldId ?: return
+        val sessionId = currentSessionId ?: return
         val nodeId = currentNodeId ?: return
 
         playerManager.setGenerating(true)
 
         viewModelScope.launch {
             try {
-                val result = audioRepository.generateNodeAudio(worldId, nodeId, voiceId)
+                val result = audioRepository.generateNodeAudio(sessionId, nodeId, voiceId)
 
                 // Update local cache
                 nodeAudioCache = nodeAudioCache + (

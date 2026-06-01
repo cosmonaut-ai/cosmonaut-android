@@ -20,8 +20,6 @@ data class LocationResponse(
 @Serializable
 data class WorldResponse(
     val id: String,
-    @SerialName("session_id")
-    val sessionId: String? = null,
     val title: String? = null,
     val description: String? = null,
     val genre: String? = null,

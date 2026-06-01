@@ -54,6 +54,7 @@ private const val PREFETCH_THRESHOLD = 3
 @Composable
 fun HomeScreen(
     onNavigateToWorld: (String) -> Unit,
+    onNavigateToSession: (String) -> Unit,
     onNavigateToStoryNode: (String, String) -> Unit,
     modifier: Modifier = Modifier,
     onNavigateToCreate: (() -> Unit)? = null,
@@ -66,8 +67,9 @@ fun HomeScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is HomeEvent.NavigateToWorld -> onNavigateToWorld(event.worldId)
+                is HomeEvent.NavigateToSession -> onNavigateToSession(event.sessionId)
                 is HomeEvent.NavigateToStoryNode ->
-                    onNavigateToStoryNode(event.worldId, event.nodeId)
+                    onNavigateToStoryNode(event.sessionId, event.nodeId)
                 is HomeEvent.ShowMessage -> snackbarHostState.showSnackbar(
                     message = event.message,
                     duration = SnackbarDuration.Short,
@@ -83,11 +85,11 @@ fun HomeScreen(
         }
     }
 
-    state.worldToDelete?.let { world ->
+    state.sessionToDelete?.let { session ->
         DeleteConfirmationDialog(
-            title = "Delete Story",
+            title = "Remove Story",
             message = "Are you sure you want to delete " +
-                "\"${world.title ?: "this story"}\"? " +
+                "\"${session.world.title ?: "this story"}\"? " +
                 "This action cannot be undone.",
             onConfirm = viewModel::confirmDelete,
             onDismiss = viewModel::cancelDelete,
@@ -97,10 +99,10 @@ fun HomeScreen(
     Box(modifier = modifier.fillMaxSize()) {
         when {
             state.isLoading -> LoadingState()
-            state.error != null && state.worlds.isEmpty() -> {
+            state.error != null && state.sessions.isEmpty() -> {
                 CosmoErrorState(
                     message = state.error!!,
-                    onRetry = viewModel::loadWorlds,
+                    onRetry = viewModel::loadSessions,
                 )
             }
             else -> {
@@ -111,7 +113,7 @@ fun HomeScreen(
                 ) {
                     WorldList(
                         state = state,
-                        onWorldClick = viewModel::onWorldClick,
+                        onSessionClick = viewModel::onSessionClick,
                         onPlayClick = viewModel::onPlayClick,
                         onDeleteClick = viewModel::requestDelete,
                         onLoadMore = viewModel::loadMore,
@@ -165,9 +167,9 @@ private fun SectionHeader(modifier: Modifier = Modifier) {
 @Composable
 private fun WorldList(
     state: HomeUiState,
-    onWorldClick: (com.cosmonaut.app.data.remote.dto.WorldResponse) -> Unit,
-    onPlayClick: (com.cosmonaut.app.data.remote.dto.WorldResponse) -> Unit,
-    onDeleteClick: (com.cosmonaut.app.data.remote.dto.WorldResponse) -> Unit,
+    onSessionClick: (com.cosmonaut.app.data.remote.dto.WorldSessionSummaryResponse) -> Unit,
+    onPlayClick: (com.cosmonaut.app.data.remote.dto.WorldSessionSummaryResponse) -> Unit,
+    onDeleteClick: (com.cosmonaut.app.data.remote.dto.WorldSessionSummaryResponse) -> Unit,
     onLoadMore: () -> Unit,
     onNavigateToWorld: (String) -> Unit,
     onNavigateToCreate: (() -> Unit)? = null,
@@ -220,7 +222,7 @@ private fun WorldList(
             SectionHeader()
         }
 
-        if (state.worlds.isEmpty()) {
+        if (state.sessions.isEmpty()) {
             item(key = "empty_worlds", contentType = "empty") {
                 CosmoEmptyState(
                     title = "No Stories Yet",
@@ -239,15 +241,15 @@ private fun WorldList(
             }
         } else {
             itemsIndexed(
-                items = state.worlds,
-                key = { _, world -> world.id },
+                items = state.sessions,
+                key = { _, session -> session.id },
                 contentType = { _, _ -> "world_card" },
-            ) { index, world ->
+            ) { index, session ->
                 WorldCard(
-                    world = world,
-                    onCardClick = { onWorldClick(world) },
-                    onPlayClick = { onPlayClick(world) },
-                    onDeleteClick = { onDeleteClick(world) },
+                    world = session.world,
+                    onCardClick = { onSessionClick(session) },
+                    onPlayClick = { onPlayClick(session) },
+                    onDeleteClick = { onDeleteClick(session) },
                     entranceDelay = index * STAGGER_DELAY_MS,
                 )
             }

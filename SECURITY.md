@@ -10,8 +10,8 @@ This policy covers the Android application source, Gradle configuration, release
 
 ## Secret Handling
 
-- Do not commit release keystores, signing passwords, `.envrc`, Sentry auth tokens, generated APKs, generated AABs, or local verification screenshots.
-- Release signing and Sentry upload credentials belong in GitHub Actions secrets or local environment variables.
+- Do not commit release keystores, signing passwords, Google Play service-account JSON, `.envrc`, Sentry auth tokens, generated APKs, generated AABs, or local verification screenshots.
+- Release signing, Play publishing, and Sentry upload credentials belong in GitHub Actions secrets or local environment variables.
 - Public Cognito IDs, Cognito domains, Sentry DSNs, and analytics project tokens are client-visible configuration, not private credentials. They should still be scoped to the correct environment.
 
 ## Public Contributions

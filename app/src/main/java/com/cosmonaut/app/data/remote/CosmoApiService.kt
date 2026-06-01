@@ -1,7 +1,9 @@
 package com.cosmonaut.app.data.remote
 
 import com.cosmonaut.app.data.remote.dto.ChooseRequest
+import com.cosmonaut.app.data.remote.dto.CreateWorldResponse
 import com.cosmonaut.app.data.remote.dto.CreateWorldRequest
+import com.cosmonaut.app.data.remote.dto.CreateWorldSessionRequest
 import com.cosmonaut.app.data.remote.dto.FeedbackRequest
 import com.cosmonaut.app.data.remote.dto.GenerateAudioRequest
 import com.cosmonaut.app.data.remote.dto.GenerateAudioResponse
@@ -9,7 +11,8 @@ import com.cosmonaut.app.data.remote.dto.HealthResponse
 import com.cosmonaut.app.data.remote.dto.InviteTokenResponse
 import com.cosmonaut.app.data.remote.dto.NewsletterRequest
 import com.cosmonaut.app.data.remote.dto.PaginatedNodesResponse
-import com.cosmonaut.app.data.remote.dto.PaginatedWorldsResponse
+import com.cosmonaut.app.data.remote.dto.PaginatedSessionsResponse
+import com.cosmonaut.app.data.remote.dto.SessionLinkHandoffResponse
 import com.cosmonaut.app.data.remote.dto.SetUsernameRequest
 import com.cosmonaut.app.data.remote.dto.StoryNodeResponse
 import com.cosmonaut.app.data.remote.dto.UpdateWorldSharingRequest
@@ -17,8 +20,8 @@ import com.cosmonaut.app.data.remote.dto.UsageResponse
 import com.cosmonaut.app.data.remote.dto.UserInfoResponse
 import com.cosmonaut.app.data.remote.dto.UsernameCheckResponse
 import com.cosmonaut.app.data.remote.dto.VoiceResponse
-import com.cosmonaut.app.data.remote.dto.WorldProgressResponse
 import com.cosmonaut.app.data.remote.dto.WorldResponse
+import com.cosmonaut.app.data.remote.dto.WorldSessionResponse
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -53,9 +56,6 @@ interface CosmoApiService {
 
     // ── Worlds ────────────────────────────────────────────────────────
 
-    @GET("worlds/")
-    suspend fun getWorlds(@Query("cursor") cursor: String? = null): PaginatedWorldsResponse
-
     @GET("worlds/featured")
     suspend fun getFeaturedWorlds(): List<WorldResponse>
 
@@ -63,13 +63,13 @@ interface CosmoApiService {
     suspend fun getWorld(@Path("worldId") worldId: String, @Query("invite") invite: String? = null,): WorldResponse
 
     @POST("worlds/")
-    suspend fun createWorld(@Body request: CreateWorldRequest): WorldResponse
+    suspend fun createWorld(@Body request: CreateWorldRequest): CreateWorldResponse
 
-    @DELETE("worlds/{worldId}")
-    suspend fun deleteWorld(@Path("worldId") worldId: String)
-
-    @GET("worlds/{worldId}/progress")
-    suspend fun getWorldProgress(@Path("worldId") worldId: String): WorldProgressResponse
+    @POST("worlds/{worldId}/sessions")
+    suspend fun createWorldSession(
+        @Path("worldId") worldId: String,
+        @Body request: CreateWorldSessionRequest = CreateWorldSessionRequest(),
+    ): WorldSessionResponse
 
     @POST("worlds/{worldId}/sharing")
     suspend fun updateWorldSharing(
@@ -88,6 +88,20 @@ interface CosmoApiService {
     @DELETE("worlds/{worldId}/invite-token")
     suspend fun deleteInviteToken(@Path("worldId") worldId: String)
 
+    // ── Sessions ───────────────────────────────────────────────────────
+
+    @GET("sessions/")
+    suspend fun getSessions(@Query("cursor") cursor: String? = null): PaginatedSessionsResponse
+
+    @GET("sessions/{sessionId}")
+    suspend fun getSession(@Path("sessionId") sessionId: String): WorldSessionResponse
+
+    @GET("sessions/{sessionId}/handoff")
+    suspend fun getSessionHandoff(@Path("sessionId") sessionId: String): SessionLinkHandoffResponse
+
+    @DELETE("sessions/{sessionId}")
+    suspend fun deleteSession(@Path("sessionId") sessionId: String)
+
     // ── User Lookup ──────────────────────────────────────────────────
 
     @GET("auth/users/batch")
@@ -95,25 +109,25 @@ interface CosmoApiService {
 
     // ── Nodes ──────────────────────────────────────────────────────────
 
-    @GET("worlds/{worldId}/nodes/")
-    suspend fun getWorldNodes(
-        @Path("worldId") worldId: String,
+    @GET("sessions/{sessionId}/nodes/")
+    suspend fun getSessionNodes(
+        @Path("sessionId") sessionId: String,
         @Query("cursor") cursor: String? = null,
     ): PaginatedNodesResponse
 
-    @GET("worlds/{worldId}/nodes/{nodeId}")
-    suspend fun getNode(@Path("worldId") worldId: String, @Path("nodeId") nodeId: String,): StoryNodeResponse
+    @GET("sessions/{sessionId}/nodes/{nodeId}")
+    suspend fun getNode(@Path("sessionId") sessionId: String, @Path("nodeId") nodeId: String,): StoryNodeResponse
 
-    @POST("worlds/{worldId}/nodes/{nodeId}/choose")
+    @POST("sessions/{sessionId}/nodes/{nodeId}/choose")
     suspend fun chooseOption(
-        @Path("worldId") worldId: String,
+        @Path("sessionId") sessionId: String,
         @Path("nodeId") nodeId: String,
         @Body request: ChooseRequest,
     ): StoryNodeResponse
 
-    @POST("worlds/{worldId}/nodes/{nodeId}/retry-processing")
+    @POST("sessions/{sessionId}/nodes/{nodeId}/retry-processing")
     suspend fun retryNodeProcessing(
-        @Path("worldId") worldId: String,
+        @Path("sessionId") sessionId: String,
         @Path("nodeId") nodeId: String,
     ): StoryNodeResponse
 
@@ -122,9 +136,9 @@ interface CosmoApiService {
     @GET("voices/")
     suspend fun listVoices(): List<VoiceResponse>
 
-    @POST("worlds/{worldId}/nodes/{nodeId}/audio")
+    @POST("sessions/{sessionId}/nodes/{nodeId}/audio")
     suspend fun generateNodeAudio(
-        @Path("worldId") worldId: String,
+        @Path("sessionId") sessionId: String,
         @Path("nodeId") nodeId: String,
         @Body request: GenerateAudioRequest,
     ): GenerateAudioResponse

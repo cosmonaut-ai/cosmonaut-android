@@ -42,10 +42,10 @@ class StreamingService @Inject constructor(
     private val streamingSessionManager: StreamingSessionManager,
 ) {
 
-    fun generateNodeText(worldId: String, nodeId: String): Flow<StreamEvent> = flow {
+    fun generateNodeText(sessionId: String, nodeId: String): Flow<StreamEvent> = flow {
         val cookieHeader = streamingSessionManager.getCookieHeader()
         val baseUrl = BuildConfig.STREAMING_BASE_URL.trimEnd('/')
-        val url = "$baseUrl/worlds/$worldId/nodes/$nodeId/generate-text"
+        val url = "$baseUrl/sessions/$sessionId/nodes/$nodeId/generate-text"
 
         val request = Request.Builder()
             .url(url)
@@ -66,7 +66,7 @@ class StreamingService @Inject constructor(
 
             if (contentType.contains("text/event-stream") || contentType.contains("text/plain")) {
                 val source = response.body.source()
-                parseAndEmitSSE(source, worldId, nodeId)
+                parseAndEmitSSE(source, sessionId, nodeId)
             } else {
                 val body = response.body.string()
                 val node = json.decodeFromString<StoryNodeResponse>(body)
@@ -79,7 +79,7 @@ class StreamingService @Inject constructor(
 
     private suspend fun kotlinx.coroutines.flow.FlowCollector<StreamEvent>.parseAndEmitSSE(
         source: BufferedSource,
-        worldId: String,
+        sessionId: String,
         nodeId: String,
     ) {
         var fullText = ""
@@ -135,7 +135,7 @@ class StreamingService @Inject constructor(
         currentCoroutineContext().ensureActive()
         delay(POST_STREAM_DELAY_MS)
 
-        val completedNode = apiService.getNode(worldId, nodeId)
+        val completedNode = apiService.getNode(sessionId, nodeId)
         emit(StreamEvent.Done(completedNode))
     }
 }

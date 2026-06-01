@@ -56,7 +56,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-data class DeepLinkData(val worldId: String, val invite: String? = null)
+enum class DeepLinkTarget {
+    WORLD,
+    SESSION,
+}
+
+data class DeepLinkData(
+    val target: DeepLinkTarget,
+    val id: String,
+    val invite: String? = null,
+)
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -104,8 +113,8 @@ class MainActivity : ComponentActivity() {
 
     private fun handleDeepLink(intent: Intent?) {
         val uri = intent?.data ?: return
-        val deepLink = parseWorldDeepLink(uri) ?: return
-        Timber.d("Deep link received: worldId=${deepLink.worldId}, invite=${deepLink.invite}")
+        val deepLink = parseCosmonautDeepLink(uri) ?: return
+        Timber.d("Deep link received: target=${deepLink.target}, id=${deepLink.id}, invite=${deepLink.invite}")
         _pendingDeepLink.value = deepLink
     }
 
@@ -114,13 +123,17 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private fun parseWorldDeepLink(uri: Uri): DeepLinkData? {
+private fun parseCosmonautDeepLink(uri: Uri): DeepLinkData? {
     val pathSegments = uri.pathSegments ?: return null
-    if (pathSegments.size < 2 || pathSegments[0] != "worlds") return null
-    val worldId = pathSegments[1]
-    if (worldId.isBlank()) return null
+    if (pathSegments.size < 2) return null
+    val id = pathSegments[1]
+    if (id.isBlank()) return null
     val invite = uri.getQueryParameter("invite")
-    return DeepLinkData(worldId = worldId, invite = invite)
+    return when (pathSegments[0]) {
+        "worlds" -> DeepLinkData(target = DeepLinkTarget.WORLD, id = id, invite = invite)
+        "sessions" -> DeepLinkData(target = DeepLinkTarget.SESSION, id = id)
+        else -> null
+    }
 }
 
 @Composable
@@ -232,7 +245,10 @@ private fun AuthenticatedShell(
 
     LaunchedEffect(deepLink) {
         val link = deepLink ?: return@LaunchedEffect
-        navController.navigate(CosmoRoute.WorldHome(link.worldId, link.invite))
+        when (link.target) {
+            DeepLinkTarget.WORLD -> navController.navigate(CosmoRoute.WorldHome(link.id, link.invite))
+            DeepLinkTarget.SESSION -> navController.navigate(CosmoRoute.SessionHome(link.id))
+        }
         pendingDeepLink.value = null
     }
 

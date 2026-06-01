@@ -16,6 +16,8 @@ env:
   JAVA_VERSION: "17"
   JAVA_DISTRIBUTION: "temurin"
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -XX:+UseG1GC -XX:MaxMetaspaceSize=512m"
+  PLAY_PACKAGE_NAME: "com.cosmonaut.app"
+  PLAY_RELEASE_TRACK: "internal"
 
 jobs:
   build-dev:
@@ -67,15 +69,52 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Set release version code
+        env:
+          PLAY_VERSION_CODE_OFFSET: ${{ vars.PLAY_VERSION_CODE_OFFSET || '100000' }}
+        run: |
+          if ! [[ "$PLAY_VERSION_CODE_OFFSET" =~ ^[0-9]+$ ]]; then
+            echo "PLAY_VERSION_CODE_OFFSET must be a positive integer." >&2
+            exit 1
+          fi
+
+          version_code=$((PLAY_VERSION_CODE_OFFSET + GITHUB_RUN_NUMBER))
+          echo "VERSION_CODE=$version_code" >> "$GITHUB_ENV"
+          echo "Using Play versionCode $version_code"
+
+      - name: Validate Play release secrets
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+        run: |
+          missing=0
+          for name in \
+            GOOGLE_PLAY_SERVICE_ACCOUNT_JSON \
+            SIGNING_KEY \
+            SIGNING_KEY_ALIAS \
+            SIGNING_KEY_PASSWORD \
+            SIGNING_STORE_PASSWORD; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::$name is required to publish Cosmonaut Android to Google Play."
+              missing=1
+            fi
+          done
+
+          if [[ "$missing" -ne 0 ]]; then
+            echo "See docs/play-store-release-automation.md for setup steps." >&2
+            exit 1
+          fi
+
       - name: Decode signing key
-        if: env.SIGNING_KEY != ''
         env:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
         run: echo "$SIGNING_KEY" | base64 -d > app/release-keystore.jks
 
       - name: Build prod release AAB + APK
         env:
-          VERSION_CODE: ${{ github.run_number }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
@@ -87,8 +126,26 @@ jobs:
           POSTHOG_HOST: ${{ vars.PUBLIC_POSTHOG_HOST }}
         run: ./gradlew bundleProdRelease assembleProdRelease
 
+      - name: Verify release artifacts
+        run: |
+          test -s app/build/outputs/bundle/prodRelease/app-prod-release.aab
+          test -s app/build/outputs/apk/prod/release/app-prod-release.apk
+          jarsigner -verify app/build/outputs/bundle/prodRelease/app-prod-release.aab
+
+      - name: Publish AAB to Google Play internal testing
+        # r0adkll/upload-google-play v1.1.5
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ${{ env.PLAY_PACKAGE_NAME }}
+          releaseFiles: app/build/outputs/bundle/prodRelease/app-prod-release.aab
+          tracks: ${{ env.PLAY_RELEASE_TRACK }}
+          status: completed
+          releaseName: Cosmonaut Android ${{ github.run_number }}
+          whatsNewDirectory: distribution/whatsnew
+
       - name: Upload prod AAB
-        if: github.event.repository.private
+        if: always() && github.event.repository.private
         uses: actions/upload-artifact@v4
         with:
           name: app-prod-release-aab
@@ -96,7 +153,7 @@ jobs:
           retention-days: 90
 
       - name: Upload prod APK
-        if: github.event.repository.private
+        if: always() && github.event.repository.private
         uses: actions/upload-artifact@v4
         with:
           name: app-prod-release-apk

@@ -41,8 +41,11 @@ sealed interface CosmoRoute {
     data class WorldHome(val worldId: String, val invite: String? = null) : CosmoRoute
 
     @Serializable
-    data class StoryNode(val worldId: String, val nodeId: String) : CosmoRoute
+    data class SessionHome(val sessionId: String) : CosmoRoute
 
     @Serializable
-    data class StoryMap(val worldId: String, val currentNodeId: String? = null) : CosmoRoute
+    data class StoryNode(val sessionId: String, val nodeId: String) : CosmoRoute
+
+    @Serializable
+    data class StoryMap(val sessionId: String, val currentNodeId: String? = null) : CosmoRoute
 }

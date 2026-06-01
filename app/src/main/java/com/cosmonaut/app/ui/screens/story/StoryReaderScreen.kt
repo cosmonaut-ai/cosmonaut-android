@@ -68,10 +68,10 @@ import com.cosmonaut.app.ui.theme.CosmoTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StoryReaderScreen(
-    onNavigateToNode: (worldId: String, nodeId: String) -> Unit,
-    onNavigateToParent: (worldId: String, nodeId: String) -> Unit,
+    onNavigateToNode: (sessionId: String, nodeId: String) -> Unit,
+    onNavigateToParent: (sessionId: String, nodeId: String) -> Unit,
     onNavigateToDashboard: () -> Unit,
-    onNavigateToMap: (worldId: String, currentNodeId: String?) -> Unit,
+    onNavigateToMap: (sessionId: String, currentNodeId: String?) -> Unit,
     audioViewModel: AudioNarrationViewModel? = null,
     viewModel: StoryReaderViewModel = hiltViewModel(),
 ) {
@@ -90,7 +90,8 @@ fun StoryReaderScreen(
         val state = uiState
         if (state is StoryReaderUiState.Content && audioViewModel != null) {
             audioViewModel.setNodeContext(
-                worldId = viewModel.worldId,
+                sessionId = viewModel.sessionId,
+                worldId = state.node.worldId,
                 nodeId = state.node.id,
                 nodeTitle = state.node.title,
                 nodeTextLength = state.node.text?.length ?: 0,
@@ -124,10 +125,10 @@ fun StoryReaderScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is StoryReaderEvent.NavigateToNode -> {
-                    onNavigateToNode(event.worldId, event.nodeId)
+                    onNavigateToNode(event.sessionId, event.nodeId)
                 }
                 is StoryReaderEvent.NavigateToParent -> {
-                    onNavigateToParent(event.worldId, event.nodeId)
+                    onNavigateToParent(event.sessionId, event.nodeId)
                 }
                 is StoryReaderEvent.NavigateToDashboard -> onNavigateToDashboard()
                 is StoryReaderEvent.ShowMessage -> {
@@ -171,7 +172,7 @@ fun StoryReaderScreen(
                 onHome = { viewModel.navigateToDashboard() },
                 onUndo = { viewModel.navigateToParent() },
                 undoEnabled = hasParent,
-                onMap = { onNavigateToMap(viewModel.worldId, viewModel.nodeId) },
+                onMap = { onNavigateToMap(viewModel.sessionId, viewModel.nodeId) },
                 onAudio = { audioViewModel?.toggleNarration() },
                 audioEnabled = isAudioEnabled,
                 audioDisabledMessage = audioDisabledMessage,
@@ -187,14 +188,13 @@ fun StoryReaderScreen(
     ) { innerPadding ->
         StoryContent(
             uiState = uiState,
-            worldId = viewModel.worldId,
             isChoiceInProgress = choiceInProgress,
             onChoiceSelected = viewModel::onChoiceSelected,
             onCustomChoice = viewModel::onCustomChoice,
             onRetry = viewModel::retryGeneration,
             onGoBack = { viewModel.navigateToParent() },
             onDashboard = { viewModel.navigateToDashboard() },
-            onViewMap = { onNavigateToMap(viewModel.worldId, viewModel.nodeId) },
+            onViewMap = { onNavigateToMap(viewModel.sessionId, viewModel.nodeId) },
             onStartOver = { viewModel.navigateToDashboard() },
             modifier = Modifier.padding(innerPadding),
         )
@@ -295,7 +295,6 @@ private fun StoryTopBar(
 @Composable
 private fun StoryContent(
     uiState: StoryReaderUiState,
-    worldId: String,
     isChoiceInProgress: Boolean,
     onChoiceSelected: (String) -> Unit,
     onCustomChoice: (String) -> Unit,

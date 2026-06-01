@@ -326,7 +326,7 @@
   - Auto-save with debounced mutations
   - Saving/Saved status indicators
 - Android share intent integration: native share sheet with world link
-- Deep link handling: `cosmonaut-ai.com/worlds/[id]` opens in app (App Links)
+- Deep link handling: `/worlds/[id]` and `/sessions/[id]` links open in app (App Links)
 - Invite token processing: handle `?invite=` deep links to join shared worlds
 - Non-owner view: read-only sharing info
 

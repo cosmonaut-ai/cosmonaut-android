@@ -17,6 +17,16 @@
                     android:pathPrefix="/worlds" />
             </intent-filter>
 
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="cosmonaut-ai.com"
+                    android:pathPrefix="/sessions" />
+            </intent-filter>
+
             <!-- App Links for www.cosmonaut-ai.com -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
@@ -26,6 +36,16 @@
                     android:scheme="https"
                     android:host="www.cosmonaut-ai.com"
                     android:pathPrefix="/worlds" />
+            </intent-filter>
+
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="www.cosmonaut-ai.com"
+                    android:pathPrefix="/sessions" />
             </intent-filter>
         </activity>
     </application>

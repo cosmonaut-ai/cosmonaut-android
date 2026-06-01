@@ -6,6 +6,7 @@ This directory contains Android implementation notes, Play Store preparation doc
 
 - [`assetlinks-setup.md`](assetlinks-setup.md): Android App Links and `assetlinks.json` setup.
 - [`play-store-listing.md`](play-store-listing.md): Play Store listing copy, data-safety notes, and required assets.
+- [`play-store-release-automation.md`](play-store-release-automation.md): GitHub Actions to Google Play release setup.
 - [`04-google-play-external-billing.md`](04-google-play-external-billing.md): billing-policy implementation brief.
 - [`03-tanstack-store5-translation.md`](03-tanstack-store5-translation.md): Store5 translation guide for developers familiar with TanStack Query.
 - [`onboarding-redesign.md`](onboarding-redesign.md): onboarding UX notes.

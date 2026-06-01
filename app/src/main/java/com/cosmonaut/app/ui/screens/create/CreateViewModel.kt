@@ -10,6 +10,7 @@ import com.cosmonaut.app.data.remote.asApiError
 import com.cosmonaut.app.data.remote.dto.CreateWorldRequest
 import com.cosmonaut.app.data.remote.dto.UsageResponse
 import com.cosmonaut.app.data.repository.UserRepository
+import com.cosmonaut.app.data.repository.SessionRepository
 import com.cosmonaut.app.data.repository.WorldRepository
 import com.cosmonaut.app.util.PromptLoader
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,7 +40,7 @@ data class CreateUiState(
 )
 
 sealed interface CreateEvent {
-    data class NavigateToWorld(val worldId: String) : CreateEvent
+    data class NavigateToSession(val sessionId: String) : CreateEvent
     data class ShowMessage(val message: String) : CreateEvent
     data object ShowQuotaDialog : CreateEvent
 }
@@ -47,6 +48,7 @@ sealed interface CreateEvent {
 @HiltViewModel
 class CreateViewModel @Inject constructor(
     private val worldRepository: WorldRepository,
+    private val sessionRepository: SessionRepository,
     private val userRepository: UserRepository,
     private val preferences: CosmoPreferences,
     private val promptLoader: PromptLoader,
@@ -118,9 +120,10 @@ class CreateViewModel @Inject constructor(
                     vocabLevel = state.vocabLevel,
                     contentFilter = state.contentFilter,
                 )
-                val world = worldRepository.createWorld(request)
+                val response = worldRepository.createWorld(request)
+                sessionRepository.invalidateSessionList()
                 _uiState.update { it.copy(isSubmitting = false, prompt = "") }
-                _events.send(CreateEvent.NavigateToWorld(world.id))
+                _events.send(CreateEvent.NavigateToSession(response.session.id))
             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                 Timber.e(e, "Failed to create world")
                 _uiState.update { it.copy(isSubmitting = false) }
