@@ -69,7 +69,7 @@ class CosmoApp :
 
     private fun initializePostHog() {
         val config = PostHogAndroidConfig(
-            apiKey = BuildConfig.POSTHOG_API_KEY,
+            projectToken = BuildConfig.POSTHOG_API_KEY,
             host = BuildConfig.POSTHOG_HOST,
         ).apply {
             captureApplicationLifecycleEvents = true

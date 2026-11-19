@@ -27,7 +27,7 @@ profileinstaller = "1.4.1"
 kotlinx-collections-immutable = "0.3.8"
 sentry = "8.40.0"
 sentry-gradle-plugin = "6.6.0"
-posthog = "3.39.2"
+posthog = "3.77.1"
 
 [libraries]
 # Compose BOM
